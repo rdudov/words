@@ -23,18 +23,22 @@ A Telegram bot for language learning with adaptive spaced repetition, LLM-powere
 - ✅ Task 1.6: ORM Models - Lesson & Statistics
 - ✅ Task 1.7: ORM Models - Cache Tables
 - ✅ Task 1.8: Logging Setup
+- ✅ Task 1.9: Initialize Database Script
 
 ### Next Tasks
-- Task 1.9: Initialize Database Script
+- Phase 1 Complete - Ready for Phase 2 (User Management)
 
 ## Project Structure
 
 ```
 /opt/projects/words/
 ├── data/
-│   ├── frequency_lists/  # Word frequency data
-│   └── translations/     # Translation data
-├── logs/                 # Application logs
+│   ├── database/        # SQLite database files
+│   ├── frequency_lists/ # Word frequency data
+│   └── translations/    # Translation data
+├── logs/                # Application logs
+├── scripts/             # Utility scripts
+│   └── init_db.py       # Database initialization script
 ├── src/words/           # Main application package
 │   ├── config/          # Configuration and constants
 │   ├── infrastructure/  # Database infrastructure
@@ -66,16 +70,40 @@ python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
-2. Install dependencies (once Task 0.2 is complete):
+2. Install dependencies:
 ```bash
 pip install -r requirements.txt
 ```
+
+3. Initialize the database:
+```bash
+python scripts/init_db.py
+```
+
+This script will:
+- Create the necessary database directories (if using SQLite)
+- Create all database tables
+- Can be run multiple times safely (idempotent)
 
 ### Running the Application
 
 ```bash
 python -m src.words
 ```
+
+### Database Management
+
+The project includes a database initialization script:
+
+```bash
+# Initialize or update database schema
+python scripts/init_db.py
+```
+
+The script is idempotent and can be run multiple times without issues. It will:
+- Create the database directory if needed (for SQLite)
+- Create all required tables
+- Handle errors gracefully with proper logging
 
 ### Using the Logger
 
