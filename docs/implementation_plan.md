@@ -700,7 +700,7 @@ class WordStatistics(Base):
 
 **Dependencies:** Task 1.5
 
-### Task 1.7: ORM Models - Cache Tables 🟢 P1
+### Task 1.7: ORM Models - Cache Tables ✅ COMPLETED
 
 **File to Create:** `src/words/models/cache.py`
 

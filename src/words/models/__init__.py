@@ -9,6 +9,7 @@ from .user import User, LanguageProfile, CEFRLevel
 from .word import Word, WordStatusEnum, UserWord
 from .lesson import Lesson, LessonAttempt
 from .statistics import WordStatistics
+from .cache import CachedTranslation, CachedValidation
 
 __all__ = [
     "Base",
@@ -23,4 +24,6 @@ __all__ = [
     "Lesson",
     "LessonAttempt",
     "WordStatistics",
+    "CachedTranslation",
+    "CachedValidation",
 ]
