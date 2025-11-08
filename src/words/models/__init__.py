@@ -6,6 +6,7 @@ This package contains all SQLAlchemy ORM models and mixins.
 
 from .base import Base, TimestampMixin, TZDateTime
 from .user import User, LanguageProfile, CEFRLevel
+from .word import Word, WordStatusEnum, UserWord
 
 __all__ = [
     "Base",
@@ -14,4 +15,7 @@ __all__ = [
     "User",
     "LanguageProfile",
     "CEFRLevel",
+    "Word",
+    "WordStatusEnum",
+    "UserWord",
 ]

@@ -8,8 +8,8 @@ This is a Telegram bot for language learning with adaptive spaced repetition, LL
 
 **Current Status:**
 - ✅ Phase 0 Complete: Project Setup (Tasks 0.1-0.3)
-- 🔄 Phase 1 In Progress: Core Infrastructure (Tasks 1.1-1.4 complete)
-  - Remaining: Tasks 1.5-1.9 (ORM Models, Logging, Database Init)
+- 🔄 Phase 1 In Progress: Core Infrastructure (Tasks 1.1-1.5 complete)
+  - Remaining: Tasks 1.6-1.9 (Lesson/Statistics Models, Cache, Logging, Database Init)
 
 ## Project Structure
 

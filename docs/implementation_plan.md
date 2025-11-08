@@ -520,7 +520,7 @@ class LanguageProfile(Base, TimestampMixin):
 
 **Dependencies:** Task 1.3
 
-### Task 1.5: ORM Models - Word & UserWord 🟡 P0
+### Task 1.5: ORM Models - Word & UserWord ✅ COMPLETED
 
 **File to Create:** `src/words/models/word.py`
 

@@ -106,7 +106,7 @@ class LanguageProfile(Base, TimestampMixin):
 
     # Relationships
     user: Mapped["User"] = relationship(back_populates="profiles")
+    user_words: Mapped[list["UserWord"]] = relationship(back_populates="profile", cascade="all, delete-orphan")
 
-    # TODO: Add these relationships when UserWord and Lesson models are created (Tasks 1.5 & 1.6):
-    # user_words: Mapped[list["UserWord"]] = relationship(back_populates="profile", cascade="all, delete-orphan")
+    # TODO: Add this relationship when Lesson model is created (Task 1.6):
     # lessons: Mapped[list["Lesson"]] = relationship(back_populates="profile", cascade="all, delete-orphan")

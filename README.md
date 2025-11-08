@@ -19,10 +19,9 @@ A Telegram bot for language learning with adaptive spaced repetition, LLM-powere
 - ✅ Task 1.2: Database Setup
 - ✅ Task 1.3: ORM Models - Base
 - ✅ Task 1.4: ORM Models - User & Profile
+- ✅ Task 1.5: ORM Models - Word & UserWord
 
 ### Next Tasks
-
-- Task 1.5: ORM Models - Word & UserWord
 - Task 1.6: ORM Models - Lesson & Statistics
 - Task 1.7: ORM Models - Cache Tables
 - Task 1.8: Logging Setup
