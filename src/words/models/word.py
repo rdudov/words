@@ -128,9 +128,7 @@ class UserWord(Base, TimestampMixin):
     # Relationships
     profile: Mapped["LanguageProfile"] = relationship(back_populates="user_words")
     word: Mapped["Word"] = relationship()
-
-    # TODO: Add this relationship when WordStatistics model is created (Task 1.6):
-    # statistics: Mapped[list["WordStatistics"]] = relationship(
-    #     back_populates="user_word",
-    #     cascade="all, delete-orphan"
-    # )
+    statistics: Mapped[list["WordStatistics"]] = relationship(
+        back_populates="user_word",
+        cascade="all, delete-orphan"
+    )

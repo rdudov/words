@@ -598,7 +598,7 @@ class UserWord(Base, TimestampMixin):
 
 **Dependencies:** Task 1.4
 
-### Task 1.6: ORM Models - Lesson & Statistics 🟡 P0
+### Task 1.6: ORM Models - Lesson & Statistics ✅ COMPLETED
 
 **Files to Create:**
 - `src/words/models/lesson.py`
