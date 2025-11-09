@@ -162,6 +162,85 @@ When `logs/bot.log` reaches `MAX_LOG_SIZE`:
 - EXCEPTION: Unhandled exceptions with full stack traces
 - DEBUG: Detailed flow information for troubleshooting
 
+## SQLAlchemy Async Best Practices
+
+The project uses async SQLAlchemy which has special requirements for relationship loading.
+
+**Core Rule:** Always eager load relationships that will be accessed after the query.
+
+**Why:** In async SQLAlchemy, accessing relationships outside the query context triggers lazy loading, which fails with `MissingGreenlet` errors in async code.
+
+**Solution:** Use eager loading options:
+
+```python
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
+
+# Correct - eager loading with selectinload()
+result = await session.execute(
+    select(LanguageProfile)
+    .where(LanguageProfile.user_id == user_id)
+    .options(selectinload(LanguageProfile.user))
+)
+profile = result.scalar_one()
+native_lang = profile.user.native_language  # Works!
+
+# Incorrect - lazy loading will fail
+result = await session.execute(
+    select(LanguageProfile).where(LanguageProfile.user_id == user_id)
+)
+profile = result.scalar_one()
+native_lang = profile.user.native_language  # ERROR: MissingGreenlet!
+```
+
+**Loading Strategies:**
+- **`selectinload()`**: Use for one-to-many and most many-to-one relationships (default choice)
+- **`joinedload()`**: Use for one-to-one relationships or small many-to-one
+- Chain them for nested relationships: `selectinload(User.profiles).selectinload(LanguageProfile.user_words)`
+
+**Documentation:**
+- **Production code guidelines**: `docs/database_guidelines.md`
+  - Comprehensive guide to eager loading
+  - Comparison of loading strategies
+  - Real examples from this codebase
+  - Troubleshooting common issues
+- **Testing and detection**: `tests/LAZY_LOADING_DETECTION.md`
+  - How to test eager loading
+  - Using the inspection API
+  - Test fixtures and patterns
+- **Repository examples**: `src/words/repositories/user.py`, `src/words/repositories/word.py`
+  - See ProfileRepository.get_active_profile() for many-to-one loading
+  - See UserRepository.get_by_telegram_id() for one-to-many loading
+  - See UserWordRepository.get_user_word() for multiple relationships
+
+**Key Points:**
+- Use `selectinload()` for one-to-many relationships (avoids cartesian products)
+- Use `joinedload()` for one-to-one relationships (single query)
+- Always test relationship access in integration tests
+- When you see `MissingGreenlet` error, add `selectinload()` to your query
+- Load only relationships you actually access (performance)
+
+**Common Pattern:**
+```python
+# Repository method with eager loading
+async def get_active_profile(self, user_id: int) -> LanguageProfile | None:
+    """
+    Get active profile with user eagerly loaded.
+
+    Uses selectinload(LanguageProfile.user) because handlers access
+    profile.user.native_language for LLM context.
+    """
+    result = await self.session.execute(
+        select(LanguageProfile)
+        .where(LanguageProfile.user_id == user_id)
+        .where(LanguageProfile.is_active == True)
+        .options(selectinload(LanguageProfile.user))  # Required!
+    )
+    return result.scalar_one_or_none()
+```
+
+**Remember:** If your code accesses a relationship (like `profile.user` or `user.profiles`), that relationship MUST be eagerly loaded in the query. See `docs/database_guidelines.md` for complete details.
+
 ## Rules
 
 Находи и используй уже имеющиеся в проекте классы и методы. Не дублируй похожую функциональность.

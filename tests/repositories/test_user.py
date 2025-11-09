@@ -708,6 +708,52 @@ class TestProfileRepositoryIntegration:
         assert retrieved is not None
         assert retrieved.target_language == "en"
 
+    @pytest.mark.asyncio
+    async def test_get_active_profile_eagerly_loads_user(self, session, user_with_profiles):
+        """
+        Test that get_active_profile() uses eager loading for user relationship.
+
+        This test verifies that the user relationship is eagerly loaded
+        using selectinload to prevent lazy loading issues in async context.
+
+        Uses SQLAlchemy inspection API to verify the relationship is loaded,
+        not just that it can be accessed (which could work even with lazy loading
+        in some contexts).
+
+        This test will FAIL if:
+        - selectinload(LanguageProfile.user) is removed from get_active_profile()
+        - The user relationship is not eagerly loaded
+        """
+        from sqlalchemy import inspect as sa_inspect
+        from sqlalchemy.orm.base import NO_VALUE
+
+        repo = ProfileRepository(session)
+        profile = await repo.get_active_profile(123456789)
+
+        assert profile is not None
+        assert profile.target_language == "en"
+
+        # Use SQLAlchemy inspection to verify eager loading
+        inspection = sa_inspect(profile)
+        user_attr = inspection.attrs.user
+
+        # Check if user relationship is loaded
+        # loaded_value will be NO_VALUE if lazy loading is used
+        # loaded_value will be the actual User object if eager loading worked
+        is_loaded = user_attr.loaded_value is not NO_VALUE
+
+        assert is_loaded, (
+            "User relationship is not eagerly loaded in get_active_profile()! "
+            "This will cause MissingGreenlet errors when accessing profile.user "
+            "in async context (e.g., in bot handlers)."
+        )
+
+        # Verify the loaded user has correct data
+        loaded_user = user_attr.loaded_value
+        assert loaded_user is not None
+        assert loaded_user.user_id == 123456789
+        assert loaded_user.native_language == "ru"
+
 
 class TestEdgeCases:
     """Tests for edge cases and error scenarios."""
