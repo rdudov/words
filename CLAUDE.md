@@ -44,6 +44,124 @@ python -m src.words
 2. Run tests before committing: `pytest`
 3. Update README.md after significant changes
 
+## Logging Standards
+
+The project uses Python's standard `logging` module with rotating file handlers. This provides consistent, production-ready logging without external dependencies.
+
+**Core Principles:**
+- Use standard `logging` module (NOT structlog or other libraries)
+- Each module creates its own logger: `logger = logging.getLogger(__name__)`
+- Centralized configuration in `src/words/utils/logger.py`
+- Log rotation via `RotatingFileHandler`
+- Dual output: console + rotating log files
+
+**Initialization:**
+The logging system is initialized in `src/words/__main__.py`:
+
+```python
+from src.words.utils.logger import setup_logging
+
+# Call this ONCE at application startup
+setup_logging()
+```
+
+**Module Usage:**
+In every module that needs logging, add at the top level:
+
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Then use throughout the module:
+logger.info("User registered successfully")
+logger.error("Failed to connect to database")
+logger.exception("Unexpected error occurred")  # Includes stack trace
+logger.warning("API rate limit approaching")
+logger.debug("Processing item %d", item_id)
+```
+
+**CORRECT Examples:**
+```python
+# Simple message
+logger.info("Bot started successfully")
+
+# With string formatting (preferred)
+logger.error("Failed to add word '%s' for user %d", word, user_id)
+
+# With f-strings (acceptable)
+logger.warning(f"Cache miss for key: {cache_key}")
+
+# Exception logging (includes traceback)
+try:
+    risky_operation()
+except Exception as e:
+    logger.exception("Operation failed")  # Use exception(), not error()
+```
+
+**INCORRECT Examples (DO NOT USE):**
+```python
+# ❌ Wrong: Importing logger from utils
+from src.words.utils.logger import logger  # NO!
+
+# ❌ Wrong: Structured logging syntax
+logger.info("user_registered", user_id=123, language="en")  # NO!
+
+# ❌ Wrong: Using print statements
+print(f"Error: {error}")  # NO! Use logger.error()
+
+# ❌ Wrong: Creating logger with string literal
+logger = logging.getLogger("my_module")  # NO! Use __name__
+```
+
+**Log Levels:**
+- `DEBUG`: Detailed diagnostic information (disabled in production)
+- `INFO`: General informational messages about application progress
+- `WARNING`: Potentially problematic situations that aren't errors
+- `ERROR`: Error events that might still allow the application to continue
+- `CRITICAL`: Very severe errors that may prevent the application from running
+
+**Configuration:**
+Logging behavior is controlled by environment variables in `.env`:
+
+```bash
+# Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+LOG_LEVEL=INFO
+
+# Log file path
+LOG_FILE=logs/bot.log
+
+# Maximum log file size before rotation (bytes)
+MAX_LOG_SIZE=10485760  # 10MB default
+
+# Number of backup log files to keep
+MAX_LOG_BACKUP_COUNT=5  # Keep 5 old log files
+```
+
+**Log Rotation:**
+When `logs/bot.log` reaches `MAX_LOG_SIZE`:
+1. Current log renamed to `bot.log.1`
+2. Previous `bot.log.1` renamed to `bot.log.2`
+3. Continues up to `bot.log.{MAX_LOG_BACKUP_COUNT}`
+4. Oldest backup is deleted
+5. New `bot.log` file is started
+
+**Best Practices:**
+- Use `logger.exception()` instead of `logger.error()` when logging from exception handlers
+- Use structured string formatting (`%s`, `%d`) instead of f-strings for better performance
+- Log at appropriate levels (don't use INFO for debug details)
+- Include relevant context (user_id, word_id, etc.) in error messages
+- Never log sensitive data (passwords, API keys, personal info)
+- Use `__name__` for logger names to get module hierarchy in logs
+
+**When to Log:**
+- INFO: User actions (registration, word addition, lesson completion)
+- INFO: System lifecycle events (startup, shutdown, configuration loaded)
+- WARNING: Recoverable errors (cache miss, retry attempts, deprecated usage)
+- ERROR: Failures that affect functionality (API errors, database errors)
+- EXCEPTION: Unhandled exceptions with full stack traces
+- DEBUG: Detailed flow information for troubleshooting
+
 ## Rules
 
 Находи и используй уже имеющиеся в проекте классы и методы. Не дублируй похожую функциональность.

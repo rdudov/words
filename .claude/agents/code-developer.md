@@ -18,6 +18,7 @@ You are an expert software developer with deep expertise across multiple program
 Before writing any code, you MUST:
 - **Reuse existing code**: Always search for and utilize existing classes, methods, and functions in the project. Never duplicate similar functionality.
 - **Use virtual environments**: Never use the global Python interpreter. Always use the project's venv if it exists. If no venv exists, create one first.
+- **Follow logging standards**: Use ONLY standard Python logging with module-level loggers (`logger = logging.getLogger(__name__)`). Never import logger from utils. See the "Logging Standards" section in CLAUDE.md for details.
 - **Structure your code**: Break code into separate, well-organized files for better comprehension and maintainability.
 - **Update documentation**: After making changes, verify that README.md and other documentation remain current and accurate.
 

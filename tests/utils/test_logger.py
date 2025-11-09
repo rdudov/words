@@ -1,362 +1,188 @@
-"""
-Tests for structured logging configuration.
+"""Tests for logging configuration."""
 
-This module tests the logging setup including file/console output,
-log levels, JSON vs console rendering, context variables, and exception handling.
-"""
-
-import json
 import logging
+import os
 from pathlib import Path
-from unittest.mock import patch
+from logging.handlers import RotatingFileHandler
 
 import pytest
-import structlog
-
-from src.words.config.settings import settings
-from src.words.utils.logger import setup_logging
-
-
-class TestLoggingSetup:
-    """Tests for the setup_logging function."""
-
-    def test_setup_logging_creates_logs_directory(self, tmp_path):
-        """Test that setup_logging creates the logs directory if it doesn't exist."""
-        # Arrange
-        log_file = tmp_path / "test_logs" / "test.log"
-
-        with patch.object(settings, 'log_file', str(log_file)), \
-             patch.object(settings, 'log_level', 'INFO'), \
-             patch.object(settings, 'debug', False):
-
-            # Ensure directory doesn't exist
-            assert not log_file.parent.exists()
-
-            # Act
-            setup_logging()
-
-            # Assert
-            assert log_file.parent.exists()
-            assert log_file.parent.is_dir()
-
-    def test_setup_logging_with_existing_directory(self, tmp_path):
-        """Test that setup_logging works when the logs directory already exists."""
-        # Arrange
-        log_dir = tmp_path / "existing_logs"
-        log_dir.mkdir()
-        log_file = log_dir / "test.log"
-
-        with patch.object(settings, 'log_file', str(log_file)), \
-             patch.object(settings, 'log_level', 'INFO'), \
-             patch.object(settings, 'debug', False):
-
-            # Act
-            logger = setup_logging()
-
-            # Assert
-            assert log_file.parent.exists()
-            assert logger is not None
-
-    def test_setup_logging_returns_structlog_logger(self, tmp_path):
-        """Test that setup_logging returns a structlog logger instance."""
-        # Arrange
-        log_file = tmp_path / "test.log"
-
-        with patch.object(settings, 'log_file', str(log_file)), \
-             patch.object(settings, 'log_level', 'INFO'), \
-             patch.object(settings, 'debug', False):
-
-            # Act
-            logger = setup_logging()
-
-            # Assert
-            assert logger is not None
-            assert hasattr(logger, "info")
-            assert hasattr(logger, "error")
-            assert hasattr(logger, "warning")
-            assert hasattr(logger, "debug")
-
-    def test_logging_to_file(self, tmp_path):
-        """Test that logs are written to the configured file."""
-        # Arrange
-        log_file = tmp_path / "test.log"
-
-        with patch.object(settings, 'log_file', str(log_file)), \
-             patch.object(settings, 'log_level', 'INFO'), \
-             patch.object(settings, 'debug', False):
-
-            # Act
-            logger = setup_logging()
-            test_message = "Test log message"
-            logger.info(test_message)
-
-            # Assert
-            assert log_file.exists()
-            log_content = log_file.read_text()
-            assert test_message in log_content
-
-    def test_logging_to_console(self, tmp_path, capsys):
-        """Test that logs are written to console."""
-        # Arrange
-        log_file = tmp_path / "test.log"
-
-        with patch.object(settings, 'log_file', str(log_file)), \
-             patch.object(settings, 'log_level', 'INFO'), \
-             patch.object(settings, 'debug', True):
-
-            # Act
-            logger = setup_logging()
-            test_message = "Console test message"
-            logger.info(test_message)
-
-            # Assert
-            captured = capsys.readouterr()
-            # The message should appear in stdout or stderr
-            output = captured.out + captured.err
-            assert test_message in output
-
-    def test_log_level_debug(self, tmp_path):
-        """Test that DEBUG level logs are captured when log_level is DEBUG."""
-        # Arrange
-        log_file = tmp_path / "test.log"
-
-        with patch.object(settings, 'log_file', str(log_file)), \
-             patch.object(settings, 'log_level', 'DEBUG'), \
-             patch.object(settings, 'debug', False):
-
-            # Act
-            logger = setup_logging()
-            debug_message = "Debug level message"
-            logger.debug(debug_message)
-
-            # Assert
-            log_content = log_file.read_text()
-            assert debug_message in log_content
-
-    def test_log_level_filtering(self, tmp_path):
-        """Test that log levels below the configured level are filtered out."""
-        # Arrange
-        log_file = tmp_path / "test.log"
-
-        with patch.object(settings, 'log_file', str(log_file)), \
-             patch.object(settings, 'log_level', 'WARNING'), \
-             patch.object(settings, 'debug', False):
-
-            # Act
-            logger = setup_logging()
-            logger.debug("Debug message - should not appear")
-            logger.info("Info message - should not appear")
-            warning_message = "Warning message - should appear"
-            logger.warning(warning_message)
-
-            # Assert
-            log_content = log_file.read_text()
-            assert "Debug message" not in log_content
-            assert "Info message" not in log_content
-            assert warning_message in log_content
-
-    def test_json_renderer_in_production(self, tmp_path):
-        """Test that JSON renderer is used when debug=False."""
-        # Arrange
-        log_file = tmp_path / "test.log"
-
-        with patch.object(settings, 'log_file', str(log_file)), \
-             patch.object(settings, 'log_level', 'INFO'), \
-             patch.object(settings, 'debug', False):
-
-            # Act
-            logger = setup_logging()
-            test_message = "JSON test message"
-            logger.info(test_message)
-
-            # Assert
-            log_content = log_file.read_text()
-            # Try to parse as JSON
-            log_lines = log_content.strip().split("\n")
-            parsed = json.loads(log_lines[0])
-            assert "event" in parsed
-            assert parsed["event"] == test_message
-
-    def test_console_renderer_in_development(self, tmp_path, capsys):
-        """Test that console renderer is used when debug=True."""
-        # Arrange
-        log_file = tmp_path / "test.log"
-
-        with patch.object(settings, 'log_file', str(log_file)), \
-             patch.object(settings, 'log_level', 'INFO'), \
-             patch.object(settings, 'debug', True):
-
-            # Act
-            logger = setup_logging()
-            test_message = "Console renderer test"
-            logger.info(test_message)
-
-            # Assert
-            captured = capsys.readouterr()
-            output = captured.out + captured.err
-            assert test_message in output
-            # Console renderer typically adds color codes or formatting
-            # Just verify the message is present
-
-    def test_context_variables(self, tmp_path):
-        """Test that context variables are included in logs."""
-        # Arrange
-        log_file = tmp_path / "test.log"
-
-        with patch.object(settings, 'log_file', str(log_file)), \
-             patch.object(settings, 'log_level', 'INFO'), \
-             patch.object(settings, 'debug', False):
-
-            # Act
-            logger = setup_logging()
-            test_message = "Message with context"
-            user_id = 12345
-            logger.info(test_message, user_id=user_id, action="test")
-
-            # Assert
-            log_content = log_file.read_text()
-            assert test_message in log_content
-            assert str(user_id) in log_content
-            assert "test" in log_content
-
-    def test_exception_logging(self, tmp_path):
-        """Test that exceptions are properly logged with stack traces."""
-        # Arrange
-        log_file = tmp_path / "test.log"
-
-        with patch.object(settings, 'log_file', str(log_file)), \
-             patch.object(settings, 'log_level', 'INFO'), \
-             patch.object(settings, 'debug', False):
-
-            # Act
-            logger = setup_logging()
-            try:
-                raise ValueError("Test exception")
-            except ValueError:
-                logger.exception("An error occurred")
-
-            # Assert
-            log_content = log_file.read_text()
-            assert "An error occurred" in log_content
-            assert "ValueError" in log_content
-            assert "Test exception" in log_content
-
-    def test_timestamp_format(self, tmp_path):
-        """Test that logs include ISO format timestamps."""
-        # Arrange
-        log_file = tmp_path / "test.log"
-
-        with patch.object(settings, 'log_file', str(log_file)), \
-             patch.object(settings, 'log_level', 'INFO'), \
-             patch.object(settings, 'debug', False):
-
-            # Act
-            logger = setup_logging()
-            logger.info("Timestamp test")
-
-            # Assert
-            log_content = log_file.read_text()
-            parsed = json.loads(log_content.strip())
-            assert "timestamp" in parsed
-            # ISO format should contain a 'T' separator
-            assert "T" in parsed["timestamp"]
-
-    def test_log_level_in_output(self, tmp_path):
-        """Test that log level is included in the output."""
-        # Arrange
-        log_file = tmp_path / "test.log"
-
-        with patch.object(settings, 'log_file', str(log_file)), \
-             patch.object(settings, 'log_level', 'INFO'), \
-             patch.object(settings, 'debug', False):
-
-            # Act
-            logger = setup_logging()
-            logger.info("Info level test")
-            logger.warning("Warning level test")
-            logger.error("Error level test")
-
-            # Assert
-            log_content = log_file.read_text()
-            log_lines = log_content.strip().split("\n")
-
-            parsed_info = json.loads(log_lines[0])
-            assert parsed_info["level"] == "info"
-
-            parsed_warning = json.loads(log_lines[1])
-            assert parsed_warning["level"] == "warning"
-
-            parsed_error = json.loads(log_lines[2])
-            assert parsed_error["level"] == "error"
-
-    def test_multiple_log_calls(self, tmp_path):
-        """Test that multiple log calls all work correctly."""
-        # Arrange
-        log_file = tmp_path / "test.log"
-
-        with patch.object(settings, 'log_file', str(log_file)), \
-             patch.object(settings, 'log_level', 'INFO'), \
-             patch.object(settings, 'debug', False):
-
-            # Act
-            logger = setup_logging()
-            messages = ["First message", "Second message", "Third message"]
-            for msg in messages:
-                logger.info(msg)
-
-            # Assert
-            log_content = log_file.read_text()
-            log_lines = log_content.strip().split("\n")
-            assert len(log_lines) == 3
-            for i, msg in enumerate(messages):
-                parsed = json.loads(log_lines[i])
-                assert parsed["event"] == msg
-
-
-class TestModuleLevelLogger:
-    """Tests for the module-level logger instance."""
-
-    def test_module_level_logger_exists(self):
-        """Test that the module-level logger is available."""
-        from src.words.utils.logger import logger
-
-        assert logger is not None
-
-    def test_module_level_logger_is_functional(self, tmp_path):
-        """Test that the module-level logger can log messages."""
-        # Arrange
-        log_file = tmp_path / "module_test.log"
-
-        with patch.object(settings, 'log_file', str(log_file)), \
-             patch.object(settings, 'log_level', 'INFO'), \
-             patch.object(settings, 'debug', False):
-
-            # Need to reload the module to pick up the new settings
-            import importlib
-            import sys
-
-            # Remove the module from cache
-            if 'src.words.utils.logger' in sys.modules:
-                del sys.modules['src.words.utils.logger']
-            if 'src.words.utils' in sys.modules:
-                del sys.modules['src.words.utils']
-
-            # Re-import with new settings
-            from src.words.utils.logger import logger
-
-            # Act
-            test_message = "Module logger test"
-            logger.info(test_message)
-
-            # Assert
-            assert log_file.exists()
-            log_content = log_file.read_text()
-            assert test_message in log_content
-
-    def test_module_level_logger_can_be_imported(self):
-        """Test that the logger can be imported from the utils package."""
-        from src.words.utils import logger
-
-        assert logger is not None
-        assert hasattr(logger, "info")
-        assert hasattr(logger, "error")
+
+from src.words.utils.logger import setup_logging, setup_log_directories
+
+
+def test_setup_log_directories_creates_logs_dir(tmp_path, monkeypatch):
+    """Test that setup_log_directories creates the logs directory."""
+    # Change to tmp directory
+    monkeypatch.chdir(tmp_path)
+
+    # Call function
+    setup_log_directories()
+
+    # Verify logs directory was created
+    assert (tmp_path / "logs").exists()
+    assert (tmp_path / "logs").is_dir()
+
+
+def test_setup_log_directories_idempotent(tmp_path, monkeypatch):
+    """Test that setup_log_directories can be called multiple times safely."""
+    monkeypatch.chdir(tmp_path)
+
+    # Call multiple times
+    setup_log_directories()
+    setup_log_directories()
+    setup_log_directories()
+
+    # Should still work and directory should exist
+    assert (tmp_path / "logs").exists()
+
+
+def test_setup_logging_creates_log_directory(tmp_path, monkeypatch):
+    """Test that setup_logging creates the log directory."""
+    log_file = tmp_path / "logs" / "test.log"
+    log_file_str = str(log_file)
+
+    # Mock settings
+    class MockSettings:
+        log_file = log_file_str
+        log_level = "INFO"
+
+    monkeypatch.setattr("src.words.utils.logger.settings", MockSettings())
+    monkeypatch.chdir(tmp_path)
+
+    # Call setup_logging
+    setup_logging()
+
+    # Verify directory was created
+    assert log_file.parent.exists()
+
+
+def test_setup_logging_configures_handlers():
+    """Test that setup_logging configures both file and console handlers."""
+    # Clear existing handlers
+    root = logging.getLogger()
+    root.handlers.clear()
+
+    setup_logging()
+
+    # Should have exactly 2 handlers: console and file
+    assert len(root.handlers) == 2
+
+    handler_types = [type(h).__name__ for h in root.handlers]
+    assert "StreamHandler" in handler_types
+    assert "RotatingFileHandler" in handler_types
+
+
+def test_setup_logging_uses_rotating_file_handler():
+    """Test that setup_logging uses RotatingFileHandler with rotation config."""
+    root = logging.getLogger()
+    root.handlers.clear()
+
+    setup_logging()
+
+    # Find the RotatingFileHandler
+    rotating_handlers = [h for h in root.handlers if isinstance(h, RotatingFileHandler)]
+    assert len(rotating_handlers) == 1
+
+    handler = rotating_handlers[0]
+
+    # Check default values (10MB, 5 backups)
+    assert handler.maxBytes == 10 * 1024 * 1024
+    assert handler.backupCount == 5
+
+
+def test_setup_logging_respects_env_vars(monkeypatch):
+    """Test that setup_logging respects MAX_LOG_SIZE and MAX_LOG_BACKUP_COUNT."""
+    root = logging.getLogger()
+    root.handlers.clear()
+
+    # Set environment variables
+    monkeypatch.setenv("MAX_LOG_SIZE", "5242880")  # 5MB
+    monkeypatch.setenv("MAX_LOG_BACKUP_COUNT", "3")
+
+    setup_logging()
+
+    # Find the RotatingFileHandler
+    rotating_handlers = [h for h in root.handlers if isinstance(h, RotatingFileHandler)]
+    handler = rotating_handlers[0]
+
+    # Check configured values
+    assert handler.maxBytes == 5242880
+    assert handler.backupCount == 3
+
+
+def test_setup_logging_respects_log_level(monkeypatch):
+    """Test that setup_logging respects the configured log level."""
+    root = logging.getLogger()
+    root.handlers.clear()
+
+    class MockSettings:
+        log_file = "test.log"
+        log_level = "DEBUG"
+
+    monkeypatch.setattr("src.words.utils.logger.settings", MockSettings())
+
+    setup_logging()
+
+    # Should be set to DEBUG
+    assert root.level == logging.DEBUG
+
+
+def test_setup_logging_uses_correct_format():
+    """Test that setup_logging uses the correct log format."""
+    root = logging.getLogger()
+    root.handlers.clear()
+
+    setup_logging()
+
+    # Check formatter on handlers
+    for handler in root.handlers:
+        formatter = handler.formatter
+        assert formatter is not None
+        # Check format string matches calypso pattern
+        assert formatter._fmt == '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+
+
+def test_module_logger_gets_correct_name():
+    """Test that module loggers get the correct __name__."""
+    # Simulate a module creating its own logger
+    module_logger = logging.getLogger("test.module.name")
+
+    assert module_logger.name == "test.module.name"
+
+    # Should inherit root logger configuration
+    root = logging.getLogger()
+    if root.handlers:
+        # Module logger should use root logger's handlers
+        assert module_logger.level == logging.NOTSET or module_logger.level == root.level
+
+
+def test_logging_to_file_and_console(tmp_path, monkeypatch, caplog):
+    """Test that logs are written to both file and console."""
+    log_file = tmp_path / "logs" / "test.log"
+    log_file_str = str(log_file)
+
+    class MockSettings:
+        log_file = log_file_str
+        log_level = "INFO"
+
+    monkeypatch.setattr("src.words.utils.logger.settings", MockSettings())
+    monkeypatch.chdir(tmp_path)
+
+    # Clear and setup
+    root = logging.getLogger()
+    root.handlers.clear()
+    setup_logging()
+
+    # Create a test logger
+    test_logger = logging.getLogger("test_module")
+
+    # Write a test message
+    test_message = "Test log message for dual output"
+    test_logger.info(test_message)
+
+    # Check file
+    assert log_file.exists()
+    log_content = log_file.read_text()
+    assert test_message in log_content
+    assert "test_module" in log_content
+    assert "INFO" in log_content

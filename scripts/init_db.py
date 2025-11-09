@@ -9,6 +9,7 @@ Usage:
 """
 
 import asyncio
+import logging
 import sys
 from pathlib import Path
 from urllib.parse import urlparse, unquote
@@ -17,8 +18,9 @@ from urllib.parse import urlparse, unquote
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.words.infrastructure.database import init_db, engine
-from src.words.utils.logger import logger
 from src.words.config.settings import settings
+
+logger = logging.getLogger(__name__)
 
 
 def create_database_directory():
@@ -52,9 +54,9 @@ def create_database_directory():
 
             if db_dir and str(db_dir) != '.':
                 db_dir.mkdir(parents=True, exist_ok=True)
-                logger.info("Database directory created/verified", path=str(db_dir))
+                logger.info("Database directory created/verified: path=%s", str(db_dir))
         except Exception as e:
-            logger.warning("Could not create database directory", error=str(e))
+            logger.warning("Could not create database directory: error=%s", str(e))
 
 
 async def main():
@@ -76,7 +78,7 @@ async def main():
         await init_db()
         logger.info("Database initialized successfully")
     except Exception as e:
-        logger.error("Failed to initialize database", error=str(e), exc_info=True)
+        logger.error("Failed to initialize database: error=%s", str(e), exc_info=True)
         raise
     finally:
         # Always dispose of the engine to clean up connections
@@ -85,7 +87,7 @@ async def main():
             logger.debug("Database engine disposed")
         except Exception as disposal_error:
             # Log disposal errors but don't mask the original exception
-            logger.warning("Error disposing engine", error=str(disposal_error))
+            logger.warning("Error disposing engine: error=%s", str(disposal_error))
 
 
 if __name__ == "__main__":

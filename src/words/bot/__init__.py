@@ -4,18 +4,20 @@ This package contains all bot-related components including handlers,
 state machines, and middleware.
 """
 
+import logging
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 
 from src.words.config.settings import settings
-from src.words.utils.logger import logger
 from .states import (
     AddWordStates,
     LessonStates,
     RegistrationStates,
 )
+
+logger = logging.getLogger(__name__)
 
 
 async def setup_bot() -> tuple[Bot, Dispatcher]:

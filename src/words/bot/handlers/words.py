@@ -12,6 +12,7 @@ The word addition flow uses FSM (Finite State Machine) to manage conversation st
 and guides users through adding words to their learning vocabulary.
 """
 
+import logging
 from aiogram import Router, F
 from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
@@ -26,7 +27,8 @@ from src.words.repositories.cache import CacheRepository
 from src.words.infrastructure.llm_client import LLMClient
 from src.words.infrastructure.database import get_session
 from src.words.config.settings import settings
-from src.words.utils.logger import logger
+
+logger = logging.getLogger(__name__)
 
 router = Router(name="words")
 
@@ -91,7 +93,7 @@ async def process_word_input(message: Message, state: FSMContext) -> None:
                 try:
                     await processing_msg.delete()
                 except Exception as e:
-                    logger.debug("failed_to_delete_processing_message", error=str(e))
+                    logger.debug("Failed to delete processing message: %s", str(e))
                 await message.answer("Please complete registration first using /start")
                 await state.clear()
                 return
@@ -117,17 +119,17 @@ async def process_word_input(message: Message, state: FSMContext) -> None:
                 source_lang = profile.target_language
                 target_lang = profile.user.native_language
                 logger.info(
-                    "language_detected_target_to_native",
-                    word=word_text,
-                    source=source_lang,
-                    target=target_lang
+                    "Language detected (target→native): word='%s', source=%s, target=%s",
+                    word_text,
+                    source_lang,
+                    target_lang
                 )
             except Exception as e:
                 # Second try: word is in native language
                 logger.debug(
-                    "first_translation_attempt_failed_trying_reverse",
-                    word=word_text,
-                    error=str(e)
+                    "First translation attempt failed, trying reverse: word='%s', error=%s",
+                    word_text,
+                    str(e)
                 )
                 translation_data = await word_service.get_word_with_translations(
                     word_text,
@@ -137,10 +139,10 @@ async def process_word_input(message: Message, state: FSMContext) -> None:
                 source_lang = profile.user.native_language
                 target_lang = profile.target_language
                 logger.info(
-                    "language_detected_native_to_target",
-                    word=word_text,
-                    source=source_lang,
-                    target=target_lang
+                    "Language detected (native→target): word='%s', source=%s, target=%s",
+                    word_text,
+                    source_lang,
+                    target_lang
                 )
 
             # Add word to vocabulary
@@ -161,7 +163,7 @@ async def process_word_input(message: Message, state: FSMContext) -> None:
             try:
                 await processing_msg.delete()
             except Exception as e:
-                logger.debug("failed_to_delete_processing_message", error=str(e))
+                logger.debug("Failed to delete processing message: %s", str(e))
             await message.answer(
                 f"✅ Word added to your vocabulary!\n\n"
                 f"<b>{word_text}</b>\n"
@@ -171,26 +173,26 @@ async def process_word_input(message: Message, state: FSMContext) -> None:
             )
 
             logger.info(
-                "word_added_via_bot",
-                user_id=user_id,
-                profile_id=profile.profile_id,
-                word=word_text,
-                source_language=source_lang,
-                target_language=target_lang
+                "Word added via bot: user_id=%d, profile_id=%d, word='%s', source=%s, target=%s",
+                user_id,
+                profile.profile_id,
+                word_text,
+                source_lang,
+                target_lang
             )
 
     except Exception as e:
         logger.error(
-            "add_word_failed",
-            user_id=user_id,
-            word=word_text,
-            error=str(e),
-            error_type=type(e).__name__
+            "Add word failed: user_id=%d, word='%s', error=%s (%s)",
+            user_id,
+            word_text,
+            str(e),
+            type(e).__name__
         )
         try:
             await processing_msg.delete()
         except Exception as delete_error:
-            logger.debug("failed_to_delete_processing_message", error=str(delete_error))
+            logger.debug("Failed to delete processing message: %s", str(delete_error))
         await message.answer(
             "❌ Failed to add word. Please try again later."
         )

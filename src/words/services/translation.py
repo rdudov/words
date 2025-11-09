@@ -16,9 +16,11 @@ Key Features:
 - Graceful degradation on failures
 """
 
+import logging
 from src.words.infrastructure.llm_client import LLMClient
 from src.words.repositories.cache import CacheRepository
-from src.words.utils.logger import logger
+
+logger = logging.getLogger(__name__)
 
 
 class TranslationService:
@@ -118,19 +120,19 @@ class TranslationService:
 
         if cached:
             logger.debug(
-                "translation_cache_hit",
-                word=word,
-                source=source_lang,
-                target=target_lang
+                "Translation cache hit: word='%s', source=%s, target=%s",
+                word,
+                source_lang,
+                target_lang
             )
             return cached
 
         # Call LLM
         logger.info(
-            "translation_llm_call",
-            word=word,
-            source=source_lang,
-            target=target_lang
+            "Translation LLM call: word='%s', source=%s, target=%s",
+            word,
+            source_lang,
+            target_lang
         )
 
         try:
@@ -147,9 +149,9 @@ class TranslationService:
 
         except Exception as e:
             logger.error(
-                "translation_failed",
-                word=word,
-                error=str(e)
+                "Translation failed: word='%s', error=%s",
+                word,
+                str(e)
             )
             raise
 
@@ -203,18 +205,18 @@ class TranslationService:
 
         if cached:
             logger.debug(
-                "validation_cache_hit",
-                word_id=word_id,
-                user_answer=user_answer
+                "Validation cache hit: word_id=%d, user_answer='%s'",
+                word_id,
+                user_answer
             )
             return cached
 
         # Call LLM
         logger.info(
-            "validation_llm_call",
-            word_id=word_id,
-            expected=expected,
-            user_answer=user_answer
+            "Validation LLM call: word_id=%d, expected='%s', user_answer='%s'",
+            word_id,
+            expected,
+            user_answer
         )
 
         try:
@@ -234,9 +236,9 @@ class TranslationService:
 
         except Exception as e:
             logger.error(
-                "validation_failed",
-                word_id=word_id,
-                error=str(e)
+                "Validation failed: word_id=%d, error=%s",
+                word_id,
+                str(e)
             )
             # Fallback: reject answer
             return (False, "Validation service unavailable. Please try again.")

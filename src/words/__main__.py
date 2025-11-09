@@ -12,9 +12,12 @@ from pathlib import Path
 # Ensure the parent directory is in the path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
+import logging
 from src.words.bot import setup_bot
 from src.words.infrastructure.database import init_db, close_db
-from src.words.utils.logger import logger
+from src.words.utils.logger import setup_logging
+
+logger = logging.getLogger(__name__)
 
 
 async def main():
@@ -25,6 +28,9 @@ async def main():
     and starts polling for updates. Handles graceful shutdown
     on interrupt.
     """
+    # Initialize logging FIRST
+    setup_logging()
+
     logger.info("Starting bot...")
 
     # Initialize database

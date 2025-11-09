@@ -20,6 +20,7 @@ Your review process:
    - Logic errors or edge cases that weren't handled
    - Adherence to project-specific standards (check CLAUDE.md context if available)
    - Code structure and organization (avoid duplication, use existing project utilities)
+   - Logging standards: Verify use of standard logging with `logging.getLogger(__name__)`, not imports from utils. See CLAUDE.md "Logging Standards" section
    - Error handling and input validation
    - Security vulnerabilities
    - Performance considerations

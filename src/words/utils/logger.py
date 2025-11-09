@@ -1,84 +1,72 @@
 """
-Structured logging configuration for the Words application.
+Logging configuration for the Words application.
 
-This module provides centralized logging setup using structlog for structured
-logging with support for both development (console) and production (JSON) output.
+This module provides centralized logging setup using Python's standard
+logging module with rotating file handlers for production use.
 """
 
+import os
 import logging
-from pathlib import Path
-
-import structlog
+from logging.handlers import RotatingFileHandler
 
 from src.words.config.settings import settings
 
 
+def setup_log_directories():
+    """
+    Create necessary directories for logs if they don't exist.
+
+    Creates the logs directory structure needed for application logging.
+    Uses exist_ok=True to avoid errors if directories already exist.
+    """
+    directories = ['logs']
+    for directory in directories:
+        os.makedirs(directory, exist_ok=True)
+
+
 def setup_logging():
     """
-    Configure structured logging for the application.
+    Configure logging for the application.
 
-    This function sets up both standard Python logging and structlog with:
-    - File and console output handlers
-    - Log level filtering based on settings
-    - JSON format for production (debug=False)
-    - Console renderer for development (debug=True)
-    - ISO timestamp format
-    - Context variables support
-    - Stack info and exception info
+    Sets up both console and file logging with rotation:
+    - Console output via StreamHandler
+    - File output via RotatingFileHandler with configurable rotation
+    - Log format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    - Log level from settings
+    - File rotation controlled by MAX_LOG_SIZE and MAX_LOG_BACKUP_COUNT env vars
 
-    The function creates the logs directory if it doesn't exist and configures
-    all necessary processors for structured logging.
+    This function configures the root logger, so all module loggers will
+    inherit these settings. Each module should create its own logger using:
+        logger = logging.getLogger(__name__)
 
-    Returns:
-        structlog.BoundLogger: A configured structlog logger instance
+    Environment Variables:
+        MAX_LOG_SIZE: Maximum log file size in bytes (default: 10MB)
+        MAX_LOG_BACKUP_COUNT: Number of backup files to keep (default: 5)
     """
-    # Create logs directory if not exists
-    log_dir = Path(settings.log_file).parent
-    log_dir.mkdir(parents=True, exist_ok=True)
+    # Create log directories
+    setup_log_directories()
 
-    # Configure standard logging
-    logging.basicConfig(
-        level=getattr(logging, settings.log_level.upper()),
-        format="%(message)s",
-        handlers=[
-            logging.FileHandler(settings.log_file),
-            logging.StreamHandler(),
-        ],
-        force=True,  # Force reconfiguration of logging
+    # Create formatter
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
 
-    # Configure structlog processors
-    processors = [
-        # Merge in context from contextvars
-        structlog.contextvars.merge_contextvars,
-        # Add log level to event dict
-        structlog.processors.add_log_level,
-        # Add stack info if requested
-        structlog.processors.StackInfoRenderer(),
-        # Format exceptions if present
-        structlog.dev.set_exc_info,
-        structlog.processors.format_exc_info,
-        # Add ISO timestamp
-        structlog.processors.TimeStamper(fmt="iso"),
-        # Choose renderer based on debug mode
-        structlog.dev.ConsoleRenderer()
-        if settings.debug
-        else structlog.processors.JSONRenderer(),
-    ]
+    # Create console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
 
-    # Configure structlog
-    structlog.configure(
-        processors=processors,
-        wrapper_class=structlog.make_filtering_bound_logger(
-            getattr(logging, settings.log_level.upper())
-        ),
-        context_class=dict,
-        logger_factory=structlog.stdlib.LoggerFactory(),
-        cache_logger_on_first_use=False,
+    # Create rotating file handler
+    # Default: 10MB per file, keep 5 backup files
+    file_handler = RotatingFileHandler(
+        settings.log_file,
+        maxBytes=int(os.getenv('MAX_LOG_SIZE', 10*1024*1024)),  # 10MB default
+        backupCount=int(os.getenv('MAX_LOG_BACKUP_COUNT', 5)),
+        encoding='utf-8'
     )
+    file_handler.setFormatter(formatter)
 
-    return structlog.get_logger()
-
-
-# Module-level logger instance
-logger = setup_logging()
+    # Configure root logger
+    root_logger = logging.getLogger()
+    root_logger.setLevel(getattr(logging, settings.log_level.upper()))
+    root_logger.addHandler(console_handler)
+    root_logger.addHandler(file_handler)

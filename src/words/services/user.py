@@ -5,10 +5,12 @@ This module provides service classes for:
 - UserService: Business logic for user management, registration, and activity tracking
 """
 
+import logging
 from datetime import datetime, timezone
 from src.words.repositories.user import UserRepository, ProfileRepository
 from src.words.models.user import User, LanguageProfile, CEFRLevel
-from src.words.utils.logger import logger
+
+logger = logging.getLogger(__name__)
 
 
 class UserService:
@@ -88,9 +90,9 @@ class UserService:
         await self.user_repo.commit()
 
         logger.info(
-            "user_registered",
-            user_id=user_id,
-            native_language=native_language
+            "User registered: user_id=%d, native_language=%s",
+            user_id,
+            native_language
         )
 
         return user
@@ -138,10 +140,10 @@ class UserService:
         await self.profile_repo.commit()
 
         logger.info(
-            "profile_created",
-            user_id=user_id,
-            language=target_language,
-            level=level
+            "Language profile created: user_id=%d, language=%s, level=%s",
+            user_id,
+            target_language,
+            level
         )
 
         return profile
@@ -202,9 +204,9 @@ class UserService:
         await self.profile_repo.commit()
 
         logger.info(
-            "language_switched",
-            user_id=user_id,
-            language=target_language
+            "Language switched: user_id=%d, language=%s",
+            user_id,
+            target_language
         )
 
         return profile

@@ -12,10 +12,12 @@ Key Features:
 - Cache-first translation strategy via TranslationService
 """
 
+import logging
 from src.words.repositories.word import WordRepository, UserWordRepository
 from src.words.services.translation import TranslationService
 from src.words.models.word import Word, UserWord, WordStatusEnum
-from src.words.utils.logger import logger
+
+logger = logging.getLogger(__name__)
 
 
 class WordService:
@@ -127,11 +129,11 @@ class WordService:
                 raise ValueError(f"Invalid target_language: '{target_language}'")
 
             logger.info(
-                "word_addition_started",
-                profile_id=profile_id,
-                word=word_text,
-                source_language=source_language,
-                target_language=target_language
+                "Word addition started: profile_id=%d, word='%s', source=%s, target=%s",
+                profile_id,
+                word_text,
+                source_language,
+                target_language
             )
 
             # ================================================================
@@ -146,10 +148,10 @@ class WordService:
             # ================================================================
             if word:
                 logger.debug(
-                    "word_exists_checking_user_vocabulary",
-                    word_id=word.word_id,
-                    word=word_text,
-                    profile_id=profile_id
+                    "Word exists, checking user vocabulary: word_id=%d, word='%s', profile_id=%d",
+                    word.word_id,
+                    word_text,
+                    profile_id
                 )
 
                 # Check if user already has this word (deduplication)
@@ -160,19 +162,19 @@ class WordService:
                 if user_word:
                     # EARLY RETURN: User already has this word, no LLM call needed
                     logger.warning(
-                        "word_already_in_user_vocabulary",
-                        profile_id=profile_id,
-                        word_id=word.word_id,
-                        word=word_text
+                        "Word already in user vocabulary: profile_id=%d, word_id=%d, word='%s'",
+                        profile_id,
+                        word.word_id,
+                        word_text
                     )
                     return user_word
 
                 # Word exists but user doesn't have it - we'll add it below
                 logger.debug(
-                    "word_exists_adding_to_user_vocabulary",
-                    word_id=word.word_id,
-                    word=word_text,
-                    profile_id=profile_id
+                    "Word exists, adding to user vocabulary: word_id=%d, word='%s', profile_id=%d",
+                    word.word_id,
+                    word_text,
+                    profile_id
                 )
 
             # ================================================================
@@ -181,10 +183,10 @@ class WordService:
             # ================================================================
             if not word:
                 logger.debug(
-                    "word_not_found_fetching_translation",
-                    word=word_text,
-                    source_language=source_language,
-                    target_language=target_language
+                    "Word not found, fetching translation: word='%s', source=%s, target=%s",
+                    word_text,
+                    source_language,
+                    target_language
                 )
 
                 translation_data = await self.translation_service.translate_word(
@@ -210,10 +212,10 @@ class WordService:
                 await self.word_repo.commit()  # Commit Word separately
 
                 logger.info(
-                    "word_created",
-                    word_id=word.word_id,
-                    word=word_text,
-                    language=source_language
+                    "Word created: word_id=%d, word='%s', language=%s",
+                    word.word_id,
+                    word_text,
+                    source_language
                 )
 
             # ================================================================
@@ -229,33 +231,33 @@ class WordService:
             await self.user_word_repo.commit()
 
             logger.info(
-                "word_added_to_user_vocabulary",
-                profile_id=profile_id,
-                word=word_text,
-                word_id=word.word_id,
-                status=user_word.status.value
+                "Word added to user vocabulary: profile_id=%d, word='%s', word_id=%d, status=%s",
+                profile_id,
+                word_text,
+                word.word_id,
+                user_word.status.value
             )
 
             return user_word
 
         except ValueError as ve:
             logger.error(
-                "word_addition_validation_failed",
-                profile_id=profile_id,
-                word=word_text,
-                error=str(ve)
+                "Word addition validation failed: profile_id=%d, word='%s', error=%s",
+                profile_id,
+                word_text,
+                str(ve)
             )
             raise
 
         except Exception as e:
             logger.error(
-                "word_addition_failed",
-                profile_id=profile_id,
-                word=word_text,
-                source_language=source_language,
-                target_language=target_language,
-                error=str(e),
-                error_type=type(e).__name__
+                "Word addition failed: profile_id=%d, word='%s', source=%s, target=%s, error=%s (%s)",
+                profile_id,
+                word_text,
+                source_language,
+                target_language,
+                str(e),
+                type(e).__name__
             )
             # Rollback transaction on error
             await self.word_repo.rollback()

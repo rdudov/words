@@ -22,9 +22,6 @@ rapidfuzz==3.6.1
 # Scheduling
 apscheduler==3.10.4
 
-# Logging
-structlog==24.1.0
-
 # Configuration
 # Note: pydantic version constraint <2.6,>=2.4.1 ensures compatibility with aiogram 3.4.1
 # aiogram 3.4.1 requires pydantic >=2.4.1,<2.6 to avoid breaking changes
