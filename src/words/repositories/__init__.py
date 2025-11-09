@@ -7,7 +7,10 @@ for each model.
 """
 
 from .base import BaseRepository
+from .user import UserRepository, ProfileRepository
 
 __all__ = [
     "BaseRepository",
+    "UserRepository",
+    "ProfileRepository",
 ]

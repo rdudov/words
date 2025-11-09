@@ -27,9 +27,9 @@ A Telegram bot for language learning with adaptive spaced repetition, LLM-powere
 
 **Phase 2 - User Management:**
 - ✅ Task 2.1: Base Repository Pattern
+- ✅ Task 2.2: User Repository
 
 ### Next Tasks
-- Task 2.2: User Repository
 - Task 2.3: User Service
 - Task 2.4: Bot State Machine
 - Task 2.5: Telegram Keyboards
