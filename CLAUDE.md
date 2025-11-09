@@ -9,7 +9,7 @@ This is a Telegram bot for language learning with adaptive spaced repetition, LL
 **Current Status:**
 - ✅ Phase 0 Complete: Project Setup (Tasks 0.1-0.3)
 - ✅ Phase 1 Complete: Core Infrastructure (Tasks 1.1-1.9 complete)
-- 🚧 Phase 2 In Progress: User Management (Tasks 2.1-2.5 complete)
+- 🚧 Phase 2 In Progress: User Management (Tasks 2.1-2.6 complete)
 
 ## Project Structure
 

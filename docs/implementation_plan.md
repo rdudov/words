@@ -1263,7 +1263,7 @@ def build_confirmation_keyboard() -> InlineKeyboardMarkup:
 
 **Dependencies:** Task 1.1
 
-### Task 2.6: Registration Handler 🟡 P0
+### Task 2.6: Registration Handler 🟡 P0 ✅ COMPLETED
 
 **Files to Create:**
 - `src/words/bot/handlers/start.py`
@@ -1300,7 +1300,7 @@ async def cmd_start(message: Message, state: FSMContext):
             ProfileRepository(session)
         )
 
-        user = await user_service.get_or_create_user(user_id)
+        user = await user_service.get_user(user_id)
 
     if user:
         # Existing user - show main menu
