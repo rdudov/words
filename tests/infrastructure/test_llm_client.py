@@ -3,16 +3,24 @@ Comprehensive tests for LLM client infrastructure module.
 
 Tests cover:
 - LLMClient initialization and basic functionality
-- Translation method with retry logic
+- Translation method with retry logic and validation
 - Validation method with retry logic
 - Error handling for API errors
-- JSON response parsing
+- JSON response parsing and Pydantic validation
 - RateLimitedLLMClient with rate limiting
 - Circuit breaker functionality
 - Concurrent request limiting
+- E2E tests with real OpenAI API (marked with @pytest.mark.e2e)
+
+E2E Tests:
+- Real API tests are automatically skipped unless LLM_API_KEY is set to a real key
+- Run with: pytest -m e2e (requires real API key)
+- Skip with: pytest -m "not e2e"
+- Set LLM_API_KEY="sk-..." to enable E2E tests
 """
 
 import json
+import os
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from circuitbreaker import CircuitBreakerError
@@ -20,6 +28,52 @@ from tenacity import RetryError
 import openai
 
 from src.words.infrastructure.llm_client import LLMClient, RateLimitedLLMClient
+
+
+# ============================================================================
+# E2E Test Helpers (for tests that use real OpenAI API)
+# ============================================================================
+
+def _has_real_api_key() -> bool:
+    """
+    Check if a real OpenAI API key is available for e2e testing.
+
+    Returns True only if LLM_API_KEY is set to a real OpenAI key
+    (starts with 'sk-'), not the test key from conftest.py.
+    """
+    env_key = os.getenv("LLM_API_KEY")
+    return bool(
+        env_key and
+        env_key.strip() and
+        env_key.startswith("sk-") and
+        env_key != "test_api_key_12345"
+    )
+
+
+def _get_real_api_key() -> str:
+    """
+    Get the real API key for e2e testing.
+
+    Raises:
+        ValueError: If no real API key is available
+    """
+    env_key = os.getenv("LLM_API_KEY")
+    if (env_key and env_key.strip() and
+        env_key.startswith("sk-") and
+        env_key != "test_api_key_12345"):
+        return env_key
+
+    raise ValueError(
+        "No valid OpenAI API key available for e2e tests. "
+        "Set LLM_API_KEY environment variable to a real API key (sk-...) to run e2e tests."
+    )
+
+
+# Skip condition for e2e tests
+skip_if_no_real_api = pytest.mark.skipif(
+    not _has_real_api_key(),
+    reason="Real OpenAI API key not available. Set LLM_API_KEY to a real API key (sk-...) to run e2e tests."
+)
 
 
 @pytest.fixture
@@ -689,3 +743,165 @@ class TestModuleExports:
         """Test that module exports RateLimitedLLMClient."""
         from src.words.infrastructure import RateLimitedLLMClient
         assert RateLimitedLLMClient is not None
+
+
+class TestLLMClientRealAPI:
+    """
+    End-to-end tests using real OpenAI API.
+
+    IMPORTANT:
+    - These tests make actual API calls which cost money
+    - Tests are automatically skipped if no real API key is available
+    - Set LLM_API_KEY to a real OpenAI API key (sk-...) to run these tests
+    - Run with: pytest -m e2e
+    - Skip with: pytest -m "not e2e"
+
+    Test Philosophy:
+    - Keep tests minimal (2-4 tests max)
+    - Test only critical integration points that mocks can't verify
+    - Focus on response structure and basic functionality
+    - Use simple, common words to ensure reliability
+    """
+
+    @skip_if_no_real_api
+    @pytest.mark.e2e
+    @pytest.mark.asyncio
+    async def test_translate_word_english_to_russian_real_api(self):
+        """
+        E2E test: Verify translate_word works with real OpenAI API for English to Russian.
+
+        This test validates:
+        - Real API connection works
+        - Response structure matches expected schema
+        - Translation returns proper data types
+        - All required fields are present
+        - Translation quality is reasonable (basic sanity check)
+        """
+        # Use real API key and client
+        api_key = _get_real_api_key()
+        client = LLMClient(api_key=api_key, model="gpt-4o-mini")
+
+        # Translate a simple, common word
+        result = await client.translate_word(
+            word="hello",
+            source_lang="English",
+            target_lang="Russian"
+        )
+
+        # Verify response structure
+        assert isinstance(result, dict), "Result should be a dictionary"
+
+        # Verify all required fields are present
+        assert "word" in result, "Response must contain 'word' field"
+        assert "translations" in result, "Response must contain 'translations' field"
+        assert "examples" in result, "Response must contain 'examples' field"
+        assert "word_forms" in result, "Response must contain 'word_forms' field"
+
+        # Verify field types
+        assert isinstance(result["word"], str), "'word' must be a string"
+        assert isinstance(result["translations"], list), "'translations' must be a list"
+        assert isinstance(result["examples"], list), "'examples' must be a list"
+        assert isinstance(result["word_forms"], dict), "'word_forms' must be a dict"
+
+        # Verify data quality
+        assert result["word"] == "hello", "Word should match input"
+        assert len(result["translations"]) > 0, "Should have at least one translation"
+        assert "привет" in result["translations"] or "здравствуй" in result["translations"], \
+            "Should contain common Russian translation for 'hello'"
+
+        # Verify examples structure if present
+        if result["examples"]:
+            example = result["examples"][0]
+            assert isinstance(example, dict), "Example must be a dict"
+            assert "source" in example, "Example must have 'source' field"
+            assert "target" in example, "Example must have 'target' field"
+            assert isinstance(example["source"], str), "Example source must be string"
+            assert isinstance(example["target"], str), "Example target must be string"
+            assert len(example["source"]) > 0, "Example source must not be empty"
+            assert len(example["target"]) > 0, "Example target must not be empty"
+
+        print(f"\n✓ E2E Test passed: translate_word(hello, EN→RU)")
+        print(f"  Translations: {result['translations'][:3]}")
+        print(f"  Examples: {len(result['examples'])} provided")
+        print(f"  Word forms: {len(result['word_forms'])} forms")
+
+    @skip_if_no_real_api
+    @pytest.mark.e2e
+    @pytest.mark.asyncio
+    async def test_translate_word_russian_to_english_real_api(self):
+        """
+        E2E test: Verify translate_word works with real OpenAI API for Russian to English.
+
+        This test validates:
+        - Bidirectional translation works
+        - Cyrillic characters are handled correctly
+        - Response structure is consistent across language pairs
+        """
+        api_key = _get_real_api_key()
+        client = LLMClient(api_key=api_key, model="gpt-4o-mini")
+
+        # Translate a simple Russian word
+        result = await client.translate_word(
+            word="дом",
+            source_lang="Russian",
+            target_lang="English"
+        )
+
+        # Verify response structure (same as English→Russian)
+        assert isinstance(result, dict)
+        assert "word" in result
+        assert "translations" in result
+        assert "examples" in result
+        assert "word_forms" in result
+
+        # Verify field types
+        assert isinstance(result["word"], str)
+        assert isinstance(result["translations"], list)
+        assert isinstance(result["examples"], list)
+        assert isinstance(result["word_forms"], dict)
+
+        # Verify data quality
+        assert result["word"] == "дом", "Word should match input (Cyrillic)"
+        assert len(result["translations"]) > 0, "Should have at least one translation"
+        assert "house" in result["translations"] or "home" in result["translations"], \
+            "Should contain common English translation for 'дом'"
+
+        print(f"\n✓ E2E Test passed: translate_word(дом, RU→EN)")
+        print(f"  Translations: {result['translations'][:3]}")
+        print(f"  Examples: {len(result['examples'])} provided")
+
+    @skip_if_no_real_api
+    @pytest.mark.e2e
+    @pytest.mark.asyncio
+    async def test_translate_word_retry_logic_works_with_real_api(self):
+        """
+        E2E test: Verify that retry logic works with real API.
+
+        This test validates that the client can successfully complete
+        a request even if configured with retry capabilities. We can't
+        easily trigger a real retry without intentionally causing errors,
+        but we can verify the retry-enabled code path works.
+        """
+        api_key = _get_real_api_key()
+        client = LLMClient(api_key=api_key, model="gpt-4o-mini")
+
+        # Make a call that should succeed on first try
+        # The retry logic is in place but won't be triggered
+        result = await client.translate_word(
+            word="cat",
+            source_lang="English",
+            target_lang="Russian"
+        )
+
+        # Verify basic structure
+        assert isinstance(result, dict)
+        assert result["word"] == "cat"
+        assert len(result["translations"]) > 0
+
+        # Verify at least one common translation is present
+        translations_lower = [t.lower() for t in result["translations"]]
+        assert any("кот" in t or "кошка" in t for t in translations_lower), \
+            "Should contain common Russian translation for 'cat'"
+
+        print(f"\n✓ E2E Test passed: translate_word with retry logic (cat, EN→RU)")
+        print(f"  Translations: {result['translations'][:3]}")
