@@ -164,12 +164,14 @@ class ProfileRepository(BaseRepository[LanguageProfile]):
             ...     print(f"Level: {profile.level.value}")
         """
         result = await self.session.execute(
-            select(LanguageProfile).where(
+            select(LanguageProfile)
+            .where(
                 and_(
                     LanguageProfile.user_id == user_id,
                     LanguageProfile.is_active == True
                 )
             )
+            .options(selectinload(LanguageProfile.user))
         )
         return result.scalar_one_or_none()
 
