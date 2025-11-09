@@ -7,7 +7,73 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Task 3.5: Word Service Bug Fixes** - Fixed critical issues identified in code review
+  - **CRITICAL**: Fixed translation data structure mismatch
+    - Word model expects translations as dict: `{"ru": ["привет", "здравствуй"]}`
+    - TranslationService returns list: `["привет", "здравствуй"]`
+    - Now transforms translation list to dict format: `{target_language: translation_list}`
+  - **HIGH**: Fixed incorrect language assignment for word storage
+    - Words now stored with `source_language` instead of `target_language`
+    - Updated `find_by_text_and_language()` calls to use `source_language`
+    - Translations dict uses `target_language` as key
+  - **HIGH**: Added comprehensive error handling
+    - Wrapped entire method in try/except block
+    - Added error logging with full context (profile_id, word, languages, error details)
+    - Added transaction rollback on errors
+    - Re-raises exceptions to allow caller handling
+  - **HIGH**: Improved transaction management
+    - Word now committed separately before creating UserWord
+    - Added explicit rollback on error
+    - Ensures data consistency
+  - **MEDIUM**: Added input validation
+    - Validates profile_id (not None, not zero, not negative)
+    - Validates word_text (not empty, not whitespace-only)
+    - Validates language codes (not empty, not whitespace-only)
+    - Raises ValueError with descriptive messages
+  - **MEDIUM**: Enhanced logging
+    - Added `word_addition_started` log at method entry
+    - Added `fetching_translation` debug log
+    - Added `word_created` log for new words
+    - Added `word_already_exists_reusing` debug log for existing words
+    - Improved `word_already_in_user_vocabulary` warning with word text
+    - Enhanced `word_added_to_user_vocabulary` with status
+    - Added error logging for validation and general errors
+  - Updated all 27 tests to match new behavior
+    - Updated tests for correct language assignment (source vs target)
+    - Updated tests for dict translation format
+    - Added 7 new tests for input validation
+    - Added 3 new tests for error handling and logging
+    - All tests passing with 100% code coverage
+
 ### Added
+- **Task 3.5: Word Service** - Service layer for word management and vocabulary operations
+  - `WordService` class orchestrating word management, translation, and statistics
+  - `add_word_for_user()` method for adding words to user vocabulary
+    - Fetches translations via TranslationService (cache-first)
+    - Creates or finds existing Word entity
+    - Implements word deduplication (prevents adding same word twice)
+    - Creates UserWord with status=NEW
+    - Comprehensive error handling and logging
+  - `get_word_with_translations()` method for retrieving word translations
+    - Delegates to TranslationService for cache-first translation lookup
+    - Returns translation data with examples and word forms
+  - `get_user_vocabulary_stats()` method for vocabulary statistics
+    - Returns counts by learning status (NEW, LEARNING, REVIEWING, MASTERED)
+    - Calculates total vocabulary size
+  - Comprehensive test suite with 27 tests (100% code coverage)
+    - Unit tests with mocks for all methods
+    - Tests for new word creation flow
+    - Tests for existing word handling
+    - Tests for word deduplication logic
+    - Tests for statistics calculation
+    - Tests for input validation (7 tests)
+    - Tests for error handling (3 tests)
+    - Integration tests with multiple users
+    - Edge case handling tests
+  - Located at: `src/words/services/word.py`
+  - Tests at: `tests/services/test_word.py`
+
 - **Task 3.3: Translation Service** - Service layer for LLM-based translation and validation
   - `TranslationService` class orchestrating LLM client and cache repository
   - `translate_word()` method with cache-first strategy

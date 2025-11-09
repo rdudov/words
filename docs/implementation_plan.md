@@ -1950,7 +1950,7 @@ class UserWordRepository(BaseRepository[UserWord]):
 
 **Dependencies:** Task 1.5
 
-### Task 3.5: Word Service 🔴 P0
+### Task 3.5: Word Service 🔴 P0 ✅ COMPLETED
 
 **File to Create:** `src/words/services/word.py`
 

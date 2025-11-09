@@ -8,9 +8,11 @@ operations, validation, and coordination of multiple repository calls.
 Available Services:
 - UserService: User management and language profile operations
 - TranslationService: LLM-based word translation and answer validation with caching
+- WordService: Word management, vocabulary operations, and statistics
 """
 
 from .user import UserService
 from .translation import TranslationService
+from .word import WordService
 
-__all__ = ["UserService", "TranslationService"]
+__all__ = ["UserService", "TranslationService", "WordService"]

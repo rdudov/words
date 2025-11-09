@@ -39,6 +39,7 @@ A Telegram bot for language learning with adaptive spaced repetition, LLM-powere
 - ✅ Task 3.2: Cache Repository
 - ✅ Task 3.3: Translation Service
 - ✅ Task 3.4: Word Repository
+- ✅ Task 3.5: Word Service
 
 ### Phase 3 In Progress
 
