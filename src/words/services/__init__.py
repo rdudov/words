@@ -7,8 +7,10 @@ operations, validation, and coordination of multiple repository calls.
 
 Available Services:
 - UserService: User management and language profile operations
+- TranslationService: LLM-based word translation and answer validation with caching
 """
 
 from .user import UserService
+from .translation import TranslationService
 
-__all__ = ["UserService"]
+__all__ = ["UserService", "TranslationService"]

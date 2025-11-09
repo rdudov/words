@@ -8,6 +8,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Task 3.3: Translation Service** - Service layer for LLM-based translation and validation
+  - `TranslationService` class orchestrating LLM client and cache repository
+  - `translate_word()` method with cache-first strategy
+    - Checks cache before calling LLM to minimize API costs
+    - Caches translation results that never expire
+    - Returns word translations, examples, and word forms
+    - Comprehensive error handling and logging
+  - `validate_answer_with_llm()` method with cache-first strategy
+    - Intelligent answer validation with fuzzy matching
+    - Graceful fallback on LLM errors (returns user-friendly message)
+    - Caches validation results by word ID, direction, and answers
+  - Comprehensive test suite with 19 tests (100% code coverage)
+    - Unit tests with mocks for both methods
+    - Tests for cache hits and misses
+    - Tests for LLM errors and fallback behavior
+    - Tests for proper logging
+    - Integration tests with mocked dependencies
+    - Edge case handling tests
+  - Located at: `src/words/services/translation.py`
+  - Tests at: `tests/services/test_translation.py`
+
 - **Task 3.2: Cache Repository** - Repository for managing LLM result caching
   - `CacheRepository` class for translation and validation caching
   - `get_translation()` and `set_translation()` methods for translation caching
