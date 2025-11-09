@@ -197,6 +197,25 @@ class ProfileRepository(BaseRepository[LanguageProfile]):
         )
         return list(result.scalars().all())
 
+    async def deactivate_all_profiles(self, user_id: int) -> None:
+        """Deactivate all language profiles for a user.
+
+        Sets is_active=False for all profiles belonging to the user.
+        This is used before activating a new profile to ensure only
+        one profile is active at a time.
+
+        Args:
+            user_id: Telegram user ID
+
+        Example:
+            >>> await profile_repo.deactivate_all_profiles(123456789)
+            >>> await profile_repo.commit()
+        """
+        profiles = await self.get_user_profiles(user_id)
+        for profile in profiles:
+            profile.is_active = False
+        await self.session.flush()
+
     async def switch_active_language(
         self,
         user_id: int,
@@ -224,12 +243,11 @@ class ProfileRepository(BaseRepository[LanguageProfile]):
             >>> await profile_repo.commit()
             >>> print(f"Switched to {profile.target_language}")
         """
-        # Get all profiles for the user
-        profiles = await self.get_user_profiles(user_id)
-
         # Deactivate all profiles
-        for profile in profiles:
-            profile.is_active = False
+        await self.deactivate_all_profiles(user_id)
+
+        # Get all profiles to find the target
+        profiles = await self.get_user_profiles(user_id)
 
         # Find and activate target profile
         target = next(

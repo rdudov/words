@@ -355,7 +355,8 @@ class TestSwitchActiveLanguage:
         assert profile_es.is_active is True
         # Verify the activated profile was returned
         assert result is profile_es
-        mock_session.flush.assert_called_once()
+        # Flush is called twice: once in deactivate_all_profiles, once in switch_active_language
+        assert mock_session.flush.call_count == 2
 
     @pytest.mark.asyncio
     async def test_switch_active_language_raises_error_when_language_not_found(self):

@@ -6,7 +6,16 @@ This file contains pytest fixtures that are available to all test modules.
 
 import pytest
 import sys
+import os
 from pathlib import Path
+
+# Set up test environment variables before any imports
+os.environ.setdefault("TELEGRAM_BOT_TOKEN", "test_token_12345")
+os.environ.setdefault("LLM_API_KEY", "test_api_key_12345")
+os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
+os.environ.setdefault("LOG_LEVEL", "INFO")
+os.environ.setdefault("LOG_FILE", "/tmp/test_bot.log")
+os.environ.setdefault("DEBUG", "true")
 
 # Add src directory to Python path for imports
 src_path = Path(__file__).parent.parent / "src"

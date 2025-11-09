@@ -28,9 +28,9 @@ A Telegram bot for language learning with adaptive spaced repetition, LLM-powere
 **Phase 2 - User Management:**
 - ✅ Task 2.1: Base Repository Pattern
 - ✅ Task 2.2: User Repository
+- ✅ Task 2.3: User Service
 
 ### Next Tasks
-- Task 2.3: User Service
 - Task 2.4: Bot State Machine
 - Task 2.5: Telegram Keyboards
 - Task 2.6: Registration Handler
@@ -52,6 +52,7 @@ A Telegram bot for language learning with adaptive spaced repetition, LLM-powere
 │   ├── infrastructure/  # Database infrastructure
 │   ├── models/          # ORM models
 │   ├── repositories/    # Data access layer
+│   ├── services/        # Business logic layer
 │   ├── utils/           # Utility modules (logger, etc.)
 │   ├── __init__.py
 │   └── __main__.py
@@ -60,6 +61,7 @@ A Telegram bot for language learning with adaptive spaced repetition, LLM-powere
     ├── infrastructure/  # Infrastructure tests
     ├── models/          # Model tests
     ├── repositories/    # Repository tests
+    ├── services/        # Service tests
     ├── utils/           # Utility tests
     ├── __init__.py
     └── conftest.py

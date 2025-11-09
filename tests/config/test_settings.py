@@ -32,6 +32,10 @@ class TestSettings:
         monkeypatch.setenv("LLM_API_KEY", "test_key")
         monkeypatch.setenv("DATABASE_URL", "sqlite:///test.db")
 
+        # Unset optional environment variables to test defaults
+        monkeypatch.delenv("LOG_FILE", raising=False)
+        monkeypatch.delenv("DEBUG", raising=False)
+
         settings = Settings()
 
         # Verify default values
