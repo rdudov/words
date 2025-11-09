@@ -128,6 +128,12 @@ class ProfileRepository(BaseRepository[LanguageProfile]):
     - Managing profile activation/deactivation
     - Switching between language profiles
 
+    Eager Loading Strategy:
+    - get_active_profile(): Uses selectinload(LanguageProfile.user) because
+      handlers/words.py accesses profile.user.native_language
+    - get_user_profiles(): No eager loading needed (only accesses profile columns)
+    - switch_active_language(): No eager loading needed (only accesses profile columns)
+
     Attributes:
         session: AsyncSession for database operations
         model: The LanguageProfile model class
