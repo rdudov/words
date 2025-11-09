@@ -872,7 +872,7 @@ python scripts/init_db.py
 
 **Duration:** 2 days
 
-### Task 2.1: Base Repository Pattern 🟢 P0
+### Task 2.1: Base Repository Pattern 🟢 P0 ✅ COMPLETED
 
 **File to Create:** `src/words/repositories/base.py`
 
@@ -934,7 +934,7 @@ class BaseRepository(Generic[T]):
 
 **Dependencies:** Task 1.2
 
-### Task 2.2: User Repository 🟡 P0
+### Task 2.2: User Repository 🟡 P0 ✅ COMPLETED
 
 **File to Create:** `src/words/repositories/user.py`
 
@@ -1043,7 +1043,7 @@ class ProfileRepository(BaseRepository[LanguageProfile]):
 
 **Dependencies:** Task 2.1, Task 1.4
 
-### Task 2.3: User Service 🟡 P0
+### Task 2.3: User Service 🟡 P0 ✅ COMPLETED
 
 **File to Create:** `src/words/services/user.py`
 
@@ -1159,7 +1159,7 @@ class UserService:
 
 **Dependencies:** Task 2.2
 
-### Task 2.4: Bot State Machine 🟢 P0
+### Task 2.4: Bot State Machine 🟢 P0 ✅ COMPLETED
 
 **Files to Create:**
 - `src/words/bot/states/registration.py`
@@ -1195,7 +1195,7 @@ class LessonStates(StatesGroup):
 
 **Dependencies:** None
 
-### Task 2.5: Telegram Keyboards 🟢 P1
+### Task 2.5: Telegram Keyboards 🟢 P1 ✅ COMPLETED
 
 **Files to Create:**
 - `src/words/bot/keyboards/common.py`
@@ -1263,7 +1263,7 @@ def build_confirmation_keyboard() -> InlineKeyboardMarkup:
 
 **Dependencies:** Task 1.1
 
-### Task 2.6: Registration Handler 🟡 P0
+### Task 2.6: Registration Handler 🟡 P0 ✅ COMPLETED
 
 **Files to Create:**
 - `src/words/bot/handlers/start.py`
@@ -1300,7 +1300,7 @@ async def cmd_start(message: Message, state: FSMContext):
             ProfileRepository(session)
         )
 
-        user = await user_service.get_or_create_user(user_id)
+        user = await user_service.get_user(user_id)
 
     if user:
         # Existing user - show main menu
@@ -1427,7 +1427,7 @@ async def process_level(
 
 **Dependencies:** Tasks 2.3, 2.4, 2.5
 
-### Task 2.7: Main Bot Setup 🟢 P0
+### Task 2.7: Main Bot Setup 🟢 P0 ✅ COMPLETED
 
 **Files to Create:**
 - `src/words/bot/__init__.py`

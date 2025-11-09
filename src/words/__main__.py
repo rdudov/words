@@ -2,23 +2,49 @@
 Entry point for the Words application.
 
 This module allows the package to be executed as a script:
-    python -m words [arguments]
+    python -m src.words
 """
 
+import asyncio
 import sys
+from pathlib import Path
 
-from words import __version__
+# Ensure the parent directory is in the path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
+from src.words.bot import setup_bot
+from src.words.infrastructure.database import init_db, close_db
+from src.words.utils.logger import logger
 
 
-def main():
-    """Main entry point for the Words application."""
-    print("Words - Language Learning Application")
-    print("Version:", __version__)
-    print()
-    print("This is a placeholder main function.")
-    print("The CLI will be implemented in later tasks.")
-    return 0
+async def main():
+    """
+    Main entry point for the bot application.
+
+    Initializes the database, sets up the bot and dispatcher,
+    and starts polling for updates. Handles graceful shutdown
+    on interrupt.
+    """
+    logger.info("Starting bot...")
+
+    # Initialize database
+    await init_db()
+
+    # Setup bot
+    bot, dp = await setup_bot()
+
+    try:
+        # Start polling
+        logger.info("Bot is running. Press Ctrl+C to stop.")
+        await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
+    finally:
+        await bot.session.close()
+        await close_db()
+        logger.info("Bot stopped")
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("Bot stopped by user")

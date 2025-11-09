@@ -4,8 +4,8 @@ A Telegram bot for language learning with adaptive spaced repetition, LLM-powere
 
 ## Project Status
 
-**Current Phase:** Phase 1 - Core Infrastructure
-**Version:** 0.1.0
+**Current Phase:** Phase 2 Complete - Ready for Phase 3 (Word Management)
+**Version:** 0.2.0
 
 ### Completed Tasks
 
@@ -25,8 +25,18 @@ A Telegram bot for language learning with adaptive spaced repetition, LLM-powere
 - ✅ Task 1.8: Logging Setup
 - ✅ Task 1.9: Initialize Database Script
 
-### Next Tasks
-- Phase 1 Complete - Ready for Phase 2 (User Management)
+**Phase 2 - User Management:**
+- ✅ Task 2.1: Base Repository Pattern
+- ✅ Task 2.2: User Repository
+- ✅ Task 2.3: User Service
+- ✅ Task 2.4: Bot State Machine
+- ✅ Task 2.5: Telegram Keyboards
+- ✅ Task 2.6: Registration Handler
+- ✅ Task 2.7: Main Bot Setup
+
+### Phase 2 Complete!
+
+Ready to move to Phase 3: Word Management
 
 ## Project Structure
 
@@ -40,16 +50,22 @@ A Telegram bot for language learning with adaptive spaced repetition, LLM-powere
 ├── scripts/             # Utility scripts
 │   └── init_db.py       # Database initialization script
 ├── src/words/           # Main application package
+│   ├── bot/             # Telegram bot components
 │   ├── config/          # Configuration and constants
 │   ├── infrastructure/  # Database infrastructure
 │   ├── models/          # ORM models
+│   ├── repositories/    # Data access layer
+│   ├── services/        # Business logic layer
 │   ├── utils/           # Utility modules (logger, etc.)
 │   ├── __init__.py
 │   └── __main__.py
 └── tests/               # Test suite
+    ├── bot/             # Bot tests
     ├── config/          # Config tests
     ├── infrastructure/  # Infrastructure tests
     ├── models/          # Model tests
+    ├── repositories/    # Repository tests
+    ├── services/        # Service tests
     ├── utils/           # Utility tests
     ├── __init__.py
     └── conftest.py
