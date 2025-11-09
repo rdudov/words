@@ -1159,7 +1159,7 @@ class UserService:
 
 **Dependencies:** Task 2.2
 
-### Task 2.4: Bot State Machine 🟢 P0
+### Task 2.4: Bot State Machine 🟢 P0 ✅ COMPLETED
 
 **Files to Create:**
 - `src/words/bot/states/registration.py`
