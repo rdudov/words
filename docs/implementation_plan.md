@@ -872,7 +872,7 @@ python scripts/init_db.py
 
 **Duration:** 2 days
 
-### Task 2.1: Base Repository Pattern 🟢 P0
+### Task 2.1: Base Repository Pattern 🟢 P0 ✅ COMPLETED
 
 **File to Create:** `src/words/repositories/base.py`
 

@@ -4,11 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Telegram bot for language learning with adaptive spaced repetition, LLM-powered validation, and intelligent word selection. The project is in early development (Phase 0 - Project Setup).
+This is a Telegram bot for language learning with adaptive spaced repetition, LLM-powered validation, and intelligent word selection. The project is in early development (Phase 2 - User Management).
 
 **Current Status:**
 - ✅ Phase 0 Complete: Project Setup (Tasks 0.1-0.3)
 - ✅ Phase 1 Complete: Core Infrastructure (Tasks 1.1-1.9 complete)
+- 🚧 Phase 2 In Progress: User Management (Task 2.1 complete)
 
 ## Project Structure
 
