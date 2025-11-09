@@ -12,6 +12,10 @@ from src.words.infrastructure.database import (
     init_db,
     close_db,
 )
+from src.words.infrastructure.llm_client import (
+    LLMClient,
+    RateLimitedLLMClient,
+)
 
 __all__ = [
     "engine",
@@ -19,4 +23,6 @@ __all__ = [
     "get_session",
     "init_db",
     "close_db",
+    "LLMClient",
+    "RateLimitedLLMClient",
 ]

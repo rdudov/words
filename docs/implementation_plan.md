@@ -1521,7 +1521,7 @@ python -m src.words
 
 **Duration:** 3-4 days
 
-### Task 3.1: LLM Client 🟡 P0
+### Task 3.1: LLM Client 🟡 P0 ✅ COMPLETED
 
 **File to Create:** `src/words/infrastructure/llm_client.py`
 
