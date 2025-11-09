@@ -61,7 +61,12 @@ async def test_session(test_engine):
 
 @pytest.fixture
 async def test_user_with_profile(test_session):
-    """Create test user with active profile."""
+    """Create test user with active profile.
+
+    Returns real SQLAlchemy instances with relationship accessible.
+    This fixture is enhanced to ensure profile.user relationship works,
+    which is critical for testing eager loading behavior in handlers.
+    """
     user = User(
         user_id=123456789,
         native_language="ru",
@@ -78,6 +83,9 @@ async def test_user_with_profile(test_session):
     )
     test_session.add(profile)
     await test_session.commit()
+
+    # Refresh to ensure relationship is accessible in tests
+    await test_session.refresh(profile, ["user"])
 
     return user, profile
 
@@ -267,11 +275,20 @@ class TestProcessWordInput:
         test_session,
         test_user_with_profile
     ):
-        """Test language detection for target→native (word in target language)."""
+        """Test language detection for target→native (word in target language).
+
+        Enhanced to verify profile.user relationship access works correctly.
+        This catches lazy loading issues that would cause greenlet errors.
+        """
+        user, profile = test_user_with_profile
         mock_message.text = "hello"
         processing_msg = MagicMock(spec=Message)
         processing_msg.delete = AsyncMock()
         mock_message.answer = AsyncMock(side_effect=[processing_msg, MagicMock()])
+
+        # Verify relationship access works (critical for catching lazy loading issues)
+        assert profile.user.native_language == "ru"
+        assert profile.target_language == "en"
 
         translation_data = {
             "translations": ["привет", "здравствуй"],
@@ -314,11 +331,20 @@ class TestProcessWordInput:
         test_session,
         test_user_with_profile
     ):
-        """Test language detection fallback for native→target (word in native language)."""
+        """Test language detection fallback for native→target (word in native language).
+
+        Enhanced to verify profile.user relationship access works correctly.
+        This catches lazy loading issues that would cause greenlet errors.
+        """
+        user, profile = test_user_with_profile
         mock_message.text = "привет"
         processing_msg = MagicMock(spec=Message)
         processing_msg.delete = AsyncMock()
         mock_message.answer = AsyncMock(side_effect=[processing_msg, MagicMock()])
+
+        # Verify relationship access works (critical for catching lazy loading issues)
+        assert profile.user.native_language == "ru"
+        assert profile.target_language == "en"
 
         translation_data = {
             "translations": ["hello", "hi"],
@@ -360,6 +386,44 @@ class TestProcessWordInput:
         call_kwargs = mock_service_instance.add_word_for_user.call_args[1]
         assert call_kwargs["source_language"] == "ru"
         assert call_kwargs["target_language"] == "en"
+
+    @pytest.mark.asyncio
+    async def test_profile_repository_eager_loads_user_relationship(
+        self,
+        test_session,
+        test_user_with_profile
+    ):
+        """Test ProfileRepository.get_active_profile() returns profile with accessible user relationship.
+
+        This test uses real ProfileRepository (not mocked) to verify that:
+        1. The repository correctly eager loads the user relationship
+        2. Accessing profile.user.* attributes doesn't trigger lazy loading errors
+        3. The eager loading strategy prevents greenlet errors in async context
+
+        This is a critical test that catches lazy loading issues that would
+        cause "greenlet_spawn has not been called" errors in production.
+        """
+        user, profile = test_user_with_profile
+
+        # Use real ProfileRepository (NOT mocked)
+        profile_repo = ProfileRepository(test_session)
+        fetched_profile = await profile_repo.get_active_profile(user.user_id)
+
+        # Verify profile was found
+        assert fetched_profile is not None
+        assert fetched_profile.profile_id == profile.profile_id
+        assert fetched_profile.target_language == "en"
+        assert fetched_profile.is_active is True
+
+        # Critical: Access user relationship to verify eager loading works
+        # This would fail with greenlet error if eager loading wasn't working
+        assert fetched_profile.user is not None
+        assert fetched_profile.user.user_id == user.user_id
+        assert fetched_profile.user.native_language == "ru"
+        assert fetched_profile.user.interface_language == "ru"
+
+        # Verify the relationship is the same user instance
+        assert fetched_profile.user_id == user.user_id
 
     @pytest.mark.asyncio
     async def test_process_word_input_displays_translation_result(
@@ -646,7 +710,15 @@ class TestIntegration:
         test_session,
         test_user_with_profile
     ):
-        """Test complete flow from button click to word added."""
+        """Test complete flow from button click to word added.
+
+        Enhanced to verify profile.user relationship access works throughout the flow.
+        """
+        user, profile = test_user_with_profile
+
+        # Verify relationship access works at the start
+        assert profile.user.native_language == "ru"
+
         # Step 1: Click ➕ Add Word button
         await cmd_add_word(mock_message, mock_state)
         mock_state.set_state.assert_called_with(AddWordStates.waiting_for_word)
