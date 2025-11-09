@@ -1195,7 +1195,7 @@ class LessonStates(StatesGroup):
 
 **Dependencies:** None
 
-### Task 2.5: Telegram Keyboards 🟢 P1
+### Task 2.5: Telegram Keyboards 🟢 P1 ✅ COMPLETED
 
 **Files to Create:**
 - `src/words/bot/keyboards/common.py`

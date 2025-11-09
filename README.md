@@ -30,9 +30,9 @@ A Telegram bot for language learning with adaptive spaced repetition, LLM-powere
 - ✅ Task 2.2: User Repository
 - ✅ Task 2.3: User Service
 - ✅ Task 2.4: Bot State Machine
+- ✅ Task 2.5: Telegram Keyboards
 
 ### Next Tasks
-- Task 2.5: Telegram Keyboards
 - Task 2.6: Registration Handler
 - Task 2.7: Main Bot Setup
 
