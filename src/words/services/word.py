@@ -76,11 +76,16 @@ class WordService:
 
         This method implements the complete word addition flow:
         1. Validate input parameters
-        2. Get translation from LLM (cache-first via TranslationService)
-        3. Find or create Word entity (stored with source_language)
-        4. Check for existing UserWord (deduplication)
-        5. Create new UserWord with status=NEW
-        6. Commit and log
+        2. Check if word exists in database (fast, free)
+        3. If word exists, check if user already has it (fast, free)
+        4. If user has it, return early (no LLM call needed)
+        5. Get translation from LLM only if word doesn't exist (slow, expensive)
+        6. Create Word entity if needed (stored with source_language)
+        7. Create UserWord with status=NEW
+        8. Commit and log
+
+        OPTIMIZATION NOTE: Database checks are done BEFORE LLM translation
+        to avoid unnecessary API calls and costs.
 
         Args:
             profile_id: User's language profile ID
@@ -106,7 +111,9 @@ class WordService:
             >>> print(user_word.word.word)  # "hello"
         """
         try:
-            # Validate input parameters
+            # ================================================================
+            # STEP 1: Validate input parameters
+            # ================================================================
             if not profile_id or profile_id <= 0:
                 raise ValueError(f"Invalid profile_id: {profile_id}")
 
@@ -118,6 +125,7 @@ class WordService:
 
             if not target_language or not target_language.strip():
                 raise ValueError(f"Invalid target_language: '{target_language}'")
+
             logger.info(
                 "word_addition_started",
                 profile_id=profile_id,
@@ -126,24 +134,66 @@ class WordService:
                 target_language=target_language
             )
 
-            # Get translation from TranslationService (cache-first)
-            logger.debug(
-                "fetching_translation",
-                word=word_text,
-                source_language=source_language,
-                target_language=target_language
-            )
-            translation_data = await self.translation_service.translate_word(
-                word_text, source_language, target_language
-            )
-
-            # Check if word exists in database (lookup by source_language)
+            # ================================================================
+            # STEP 2: Check if word exists in database (FAST, FREE)
+            # ================================================================
             word = await self.word_repo.find_by_text_and_language(
                 word_text, source_language
             )
 
+            # ================================================================
+            # STEP 3: If word exists, check if user already has it (FAST, FREE)
+            # ================================================================
+            if word:
+                logger.debug(
+                    "word_exists_checking_user_vocabulary",
+                    word_id=word.word_id,
+                    word=word_text,
+                    profile_id=profile_id
+                )
+
+                # Check if user already has this word (deduplication)
+                user_word = await self.user_word_repo.get_user_word(
+                    profile_id, word.word_id
+                )
+
+                if user_word:
+                    # EARLY RETURN: User already has this word, no LLM call needed
+                    logger.warning(
+                        "word_already_in_user_vocabulary",
+                        profile_id=profile_id,
+                        word_id=word.word_id,
+                        word=word_text
+                    )
+                    return user_word
+
+                # Word exists but user doesn't have it - we'll add it below
+                logger.debug(
+                    "word_exists_adding_to_user_vocabulary",
+                    word_id=word.word_id,
+                    word=word_text,
+                    profile_id=profile_id
+                )
+
+            # ================================================================
+            # STEP 4: Get translation from LLM (SLOW, EXPENSIVE)
+            # Only executed if word doesn't exist in database
+            # ================================================================
             if not word:
-                # Create new word with translation data
+                logger.debug(
+                    "word_not_found_fetching_translation",
+                    word=word_text,
+                    source_language=source_language,
+                    target_language=target_language
+                )
+
+                translation_data = await self.translation_service.translate_word(
+                    word_text, source_language, target_language
+                )
+
+                # ================================================================
+                # STEP 5: Create new Word entity with translation data
+                # ================================================================
                 # Transform translation list to dict: {"ru": ["привет", "здравствуй"]}
                 translations_dict = {
                     target_language: translation_data.get("translations", [])
@@ -165,28 +215,10 @@ class WordService:
                     word=word_text,
                     language=source_language
                 )
-            else:
-                logger.debug(
-                    "word_already_exists_reusing",
-                    word_id=word.word_id,
-                    word=word_text
-                )
 
-            # Check if user already has this word (deduplication)
-            user_word = await self.user_word_repo.get_user_word(
-                profile_id, word.word_id
-            )
-
-            if user_word:
-                logger.warning(
-                    "word_already_in_user_vocabulary",
-                    profile_id=profile_id,
-                    word_id=word.word_id,
-                    word=word_text
-                )
-                return user_word
-
-            # Create new user word with status=NEW
+            # ================================================================
+            # STEP 6: Create UserWord (we know user doesn't have it)
+            # ================================================================
             user_word = UserWord(
                 profile_id=profile_id,
                 word_id=word.word_id,

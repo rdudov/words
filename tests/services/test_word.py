@@ -79,7 +79,7 @@ class TestAddWordForUser:
         }
         mock_translation_service.translate_word.return_value = translation_data
 
-        # Mock word not found (new word)
+        # Mock word not found (new word) - CHECKED FIRST in optimized flow
         mock_word_repo.find_by_text_and_language.return_value = None
 
         # Mock word creation
@@ -92,9 +92,6 @@ class TestAddWordForUser:
         )
         created_word.word_id = 1
         mock_word_repo.add.return_value = created_word
-
-        # Mock user word not found (not duplicate)
-        mock_user_word_repo.get_user_word.return_value = None
 
         # Mock user word creation
         created_user_word = UserWord(
@@ -119,14 +116,14 @@ class TestAddWordForUser:
                 target_language="ru"
             )
 
-            # Verify translation was fetched
-            mock_translation_service.translate_word.assert_called_once_with(
-                "hello", "en", "ru"
-            )
-
-            # Verify word lookup (uses source_language)
+            # OPTIMIZATION: Verify word lookup happens FIRST (before translation)
             mock_word_repo.find_by_text_and_language.assert_called_once_with(
                 "hello", "en"
+            )
+
+            # Verify translation was fetched (only for new words)
+            mock_translation_service.translate_word.assert_called_once_with(
+                "hello", "en", "ru"
             )
 
             # Verify word was created
@@ -140,8 +137,9 @@ class TestAddWordForUser:
             # Verify word was committed separately
             assert mock_word_repo.commit.call_count == 1
 
-            # Verify user word lookup
-            mock_user_word_repo.get_user_word.assert_called_once_with(1, 1)
+            # OPTIMIZATION: get_user_word is NOT called for new words
+            # (word doesn't exist, so we skip straight to creation)
+            mock_user_word_repo.get_user_word.assert_not_called()
 
             # Verify user word was created
             mock_user_word_repo.add.assert_called_once()
@@ -176,16 +174,8 @@ class TestAddWordForUser:
         mock_user_word_repo = AsyncMock(spec=UserWordRepository)
         mock_translation_service = AsyncMock(spec=TranslationService)
 
-        # Mock translation data
-        translation_data = {
-            "word": "test",
-            "translations": ["тест"],
-            "examples": [],
-            "word_forms": {}
-        }
-        mock_translation_service.translate_word.return_value = translation_data
-
         # Mock word found (existing word) - stored with source language
+        # OPTIMIZATION: Word is checked FIRST, before translation
         existing_word = Word(
             word="test",
             language="en",  # Source language
@@ -222,16 +212,19 @@ class TestAddWordForUser:
                 target_language="ru"
             )
 
-            # Verify translation was fetched
-            mock_translation_service.translate_word.assert_called_once()
-
-            # Verify word lookup (with source language)
+            # OPTIMIZATION: Verify word lookup happens FIRST
             mock_word_repo.find_by_text_and_language.assert_called_once_with(
                 "test", "en"
             )
 
+            # OPTIMIZATION: Translation is NOT fetched for existing words
+            mock_translation_service.translate_word.assert_not_called()
+
             # Verify word was NOT created (already exists)
             mock_word_repo.add.assert_not_called()
+
+            # Verify user word check was performed
+            mock_user_word_repo.get_user_word.assert_called_once_with(2, 5)
 
             # Verify user word was created
             mock_user_word_repo.add.assert_called_once()
@@ -260,16 +253,8 @@ class TestAddWordForUser:
         mock_user_word_repo = AsyncMock(spec=UserWordRepository)
         mock_translation_service = AsyncMock(spec=TranslationService)
 
-        # Mock translation data
-        translation_data = {
-            "word": "duplicate",
-            "translations": ["дубликат"],
-            "examples": [],
-            "word_forms": {}
-        }
-        mock_translation_service.translate_word.return_value = translation_data
-
         # Mock word found - stored with source language
+        # OPTIMIZATION: Word is checked FIRST, before translation
         existing_word = Word(
             word="duplicate",
             language="en",  # Source language
@@ -303,15 +288,15 @@ class TestAddWordForUser:
                 target_language="ru"
             )
 
-            # Verify translation was fetched
-            mock_translation_service.translate_word.assert_called_once()
-
-            # Verify word lookup (with source language)
+            # OPTIMIZATION: Verify word lookup happens FIRST
             mock_word_repo.find_by_text_and_language.assert_called_once_with(
                 "duplicate", "en"
             )
 
-            # Verify user word lookup
+            # OPTIMIZATION: Translation is NOT fetched for duplicates (early return)
+            mock_translation_service.translate_word.assert_not_called()
+
+            # Verify user word lookup was performed
             mock_user_word_repo.get_user_word.assert_called_once_with(3, 7)
 
             # Verify user word was NOT created (duplicate)
@@ -713,12 +698,17 @@ class TestWordServiceIntegration:
                 target_language="ru"
             )
 
-            # Verify all steps were executed in order
-            assert mock_translation_service.translate_word.called
+            # OPTIMIZATION: Verify steps executed in optimized order
+            # 1. Check word exists (before translation)
             assert mock_word_repo.find_by_text_and_language.called
+            # 2. Get translation (only for new words)
+            assert mock_translation_service.translate_word.called
+            # 3. Create word
             assert mock_word_repo.add.called
             assert mock_word_repo.commit.called  # Word committed separately
-            assert mock_user_word_repo.get_user_word.called
+            # 4. get_user_word NOT called for new words (optimization)
+            assert not mock_user_word_repo.get_user_word.called
+            # 5. Create user_word
             assert mock_user_word_repo.add.called
             assert mock_user_word_repo.commit.called
 
@@ -1061,6 +1051,9 @@ class TestWordServiceErrorHandling:
         mock_word_repo = AsyncMock(spec=WordRepository)
         mock_user_word_repo = AsyncMock(spec=UserWordRepository)
         mock_translation_service = AsyncMock(spec=TranslationService)
+
+        # OPTIMIZATION: Mock word not found (so translation is called)
+        mock_word_repo.find_by_text_and_language.return_value = None
 
         # Mock translation service to raise exception
         mock_translation_service.translate_word.side_effect = Exception("Translation API error")
