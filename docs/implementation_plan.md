@@ -1521,7 +1521,7 @@ python -m src.words
 
 **Duration:** 3-4 days
 
-### Task 3.1: LLM Client 🟡 P0
+### Task 3.1: LLM Client 🟡 P0 ✅ COMPLETED
 
 **File to Create:** `src/words/infrastructure/llm_client.py`
 
@@ -1543,7 +1543,7 @@ python -m src.words
 
 **Dependencies:** Task 1.1
 
-### Task 3.2: Cache Repository 🟡 P1
+### Task 3.2: Cache Repository 🟡 P1 ✅ COMPLETED
 
 **File to Create:** `src/words/repositories/cache.py`
 
@@ -1675,7 +1675,7 @@ class CacheRepository:
 
 **Dependencies:** Task 1.7
 
-### Task 3.3: Translation Service 🟡 P0
+### Task 3.3: Translation Service 🟡 P0 ✅ COMPLETED
 
 **File to Create:** `src/words/services/translation.py`
 
@@ -1825,7 +1825,7 @@ class TranslationService:
 
 **Dependencies:** Tasks 3.1, 3.2
 
-### Task 3.4: Word Repository 🟡 P0
+### Task 3.4: Word Repository 🟡 P0 ✅ COMPLETED
 
 **File to Create:** `src/words/repositories/word.py`
 
@@ -1950,7 +1950,7 @@ class UserWordRepository(BaseRepository[UserWord]):
 
 **Dependencies:** Task 1.5
 
-### Task 3.5: Word Service 🔴 P0
+### Task 3.5: Word Service 🔴 P0 ✅ COMPLETED
 
 **File to Create:** `src/words/services/word.py`
 
@@ -2080,7 +2080,7 @@ class WordService:
 
 **Dependencies:** Tasks 3.3, 3.4
 
-### Task 3.6: Add Word Handler 🟡 P1
+### Task 3.6: Add Word Handler 🟡 P1 ✅ COMPLETED
 
 **File to Create:** `src/words/bot/handlers/words.py`
 

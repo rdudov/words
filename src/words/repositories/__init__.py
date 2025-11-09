@@ -8,9 +8,14 @@ for each model.
 
 from .base import BaseRepository
 from .user import UserRepository, ProfileRepository
+from .cache import CacheRepository
+from .word import WordRepository, UserWordRepository
 
 __all__ = [
     "BaseRepository",
     "UserRepository",
     "ProfileRepository",
+    "CacheRepository",
+    "WordRepository",
+    "UserWordRepository",
 ]
