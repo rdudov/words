@@ -27,18 +27,24 @@ This directory contains the repository pattern implementation for data access in
   - Handles cache expiration and upsert logic
   - Normalizes inputs to lowercase for case-insensitive lookups
 
+- **word.py**: WordRepository and UserWordRepository (Task 3.4)
+  - Word management: `find_by_text_and_language()`, `get_frequency_words()`
+  - User vocabulary management: `get_user_word()`, `get_user_vocabulary()`, `count_by_status()`
+  - Eager loading of relationships using selectinload
+  - Case-insensitive word lookups
+
 ## Usage Pattern
 
 Repositories are typically used within services and accept an AsyncSession:
 
 ```python
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.words.repositories import CacheRepository
+from src.words.repositories import CacheRepository, WordRepository, UserWordRepository
+from src.words.models import WordStatusEnum
 
 async def example(session: AsyncSession):
+    # Cache example
     cache_repo = CacheRepository(session)
-
-    # Get cached translation
     result = await cache_repo.get_translation("hello", "en", "ru")
 
     if not result:
@@ -46,6 +52,20 @@ async def example(session: AsyncSession):
         result = await translation_api.translate("hello", "en", "ru")
         await cache_repo.set_translation("hello", "en", "ru", result)
         await session.commit()
+
+    # Word repository example
+    word_repo = WordRepository(session)
+    word = await word_repo.find_by_text_and_language("hello", "en")
+    frequent_words = await word_repo.get_frequency_words("en", "A1", limit=50)
+
+    # User vocabulary example
+    user_word_repo = UserWordRepository(session)
+    user_word = await user_word_repo.get_user_word(profile_id=1, word_id=100)
+    vocabulary = await user_word_repo.get_user_vocabulary(
+        profile_id=1,
+        status=WordStatusEnum.LEARNING
+    )
+    stats = await user_word_repo.count_by_status(profile_id=1)
 ```
 
 ## Key Features
@@ -59,8 +79,9 @@ async def example(session: AsyncSession):
 ## Testing
 
 Tests are located in `/home/user/words/tests/repositories/`:
-- `test_base.py`: Tests for BaseRepository
-- `test_user.py`: Tests for UserRepository and ProfileRepository
-- `test_cache.py`: Tests for CacheRepository
+- `test_base.py`: Tests for BaseRepository (26 tests)
+- `test_user.py`: Tests for UserRepository and ProfileRepository (49 tests)
+- `test_cache.py`: Tests for CacheRepository (14 tests)
+- `test_word.py`: Tests for WordRepository and UserWordRepository (40 tests)
 
-All repository tests use both mock-based unit tests and integration tests with real SQLite in-memory databases.
+All repository tests use both mock-based unit tests and integration tests with real SQLite in-memory databases. Total: 129 tests with 100% coverage for all repository code.

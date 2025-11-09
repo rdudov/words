@@ -10,7 +10,7 @@ This module contains models for:
 from __future__ import annotations
 from typing import TYPE_CHECKING
 from sqlalchemy import String, Integer, JSON, ForeignKey, Enum as SQLEnum, UniqueConstraint, Index, Float
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 from .base import Base, TimestampMixin, TZDateTime
 from datetime import datetime, timezone
 import enum
@@ -51,6 +51,23 @@ class Word(Base):
     examples: Mapped[list | None] = mapped_column(JSON, nullable=True)
     word_forms: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     frequency_rank: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    @validates('word')
+    def normalize_word(self, key: str, value: str) -> str:
+        """
+        Normalize word to lowercase on insert/update.
+
+        This ensures data integrity for case-insensitive lookups
+        by storing all words in a consistent lowercase format.
+
+        Args:
+            key: The field name (always 'word')
+            value: The word value to normalize
+
+        Returns:
+            The word normalized to lowercase
+        """
+        return value.lower() if value else value
 
 
 class WordStatusEnum(enum.Enum):
