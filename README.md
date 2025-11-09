@@ -158,6 +158,8 @@ Logging configuration:
 - [Requirements](docs/requirements.md) - Project requirements and specifications
 - [Architecture](docs/architecture.md) - System architecture and design
 - [Implementation Plan](docs/implementation_plan.md) - Detailed implementation roadmap
+- [Database Guidelines](docs/database_guidelines.md) - SQLAlchemy async best practices and eager loading
+- [Testing: Lazy Loading Detection](tests/LAZY_LOADING_DETECTION.md) - Testing strategies for async SQLAlchemy
 
 ## Development Guidelines
 
