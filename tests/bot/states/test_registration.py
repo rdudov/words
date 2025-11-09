@@ -302,7 +302,8 @@ class TestPackageExports:
         assert "RegistrationStates" in bot_all
         assert "AddWordStates" in bot_all
         assert "LessonStates" in bot_all
-        assert len(bot_all) == 3
+        assert "setup_bot" in bot_all
+        assert len(bot_all) == 4
 
     def test_direct_imports_match_package_imports(self):
         """Test that direct imports match package exports."""

@@ -10,7 +10,7 @@ import os
 from pathlib import Path
 
 # Set up test environment variables before any imports
-os.environ.setdefault("TELEGRAM_BOT_TOKEN", "test_token_12345")
+os.environ.setdefault("TELEGRAM_BOT_TOKEN", "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11")
 os.environ.setdefault("LLM_API_KEY", "test_api_key_12345")
 os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
 os.environ.setdefault("LOG_LEVEL", "INFO")

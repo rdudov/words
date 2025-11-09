@@ -4,7 +4,7 @@ A Telegram bot for language learning with adaptive spaced repetition, LLM-powere
 
 ## Project Status
 
-**Current Phase:** Phase 2 - User Management
+**Current Phase:** Phase 2 Complete - Ready for Phase 3 (Word Management)
 **Version:** 0.2.0
 
 ### Completed Tasks
@@ -32,9 +32,11 @@ A Telegram bot for language learning with adaptive spaced repetition, LLM-powere
 - ✅ Task 2.4: Bot State Machine
 - ✅ Task 2.5: Telegram Keyboards
 - ✅ Task 2.6: Registration Handler
+- ✅ Task 2.7: Main Bot Setup
 
-### Next Tasks
-- Task 2.7: Main Bot Setup
+### Phase 2 Complete!
+
+Ready to move to Phase 3: Word Management
 
 ## Project Structure
 
