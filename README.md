@@ -36,6 +36,7 @@ A Telegram bot for language learning with adaptive spaced repetition, LLM-powere
 
 **Phase 3 - Word Management:**
 - ✅ Task 3.1: LLM Client
+- ✅ Task 3.2: Cache Repository
 
 ### Phase 3 In Progress
 

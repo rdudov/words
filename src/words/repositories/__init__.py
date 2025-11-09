@@ -8,9 +8,11 @@ for each model.
 
 from .base import BaseRepository
 from .user import UserRepository, ProfileRepository
+from .cache import CacheRepository
 
 __all__ = [
     "BaseRepository",
     "UserRepository",
     "ProfileRepository",
+    "CacheRepository",
 ]

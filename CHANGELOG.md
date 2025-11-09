@@ -8,6 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Task 3.2: Cache Repository** - Repository for managing LLM result caching
+  - `CacheRepository` class for translation and validation caching
+  - `get_translation()` and `set_translation()` methods for translation caching
+    - Automatic cache expiration handling
+    - Upsert logic to avoid duplicate cache entries
+    - Case-insensitive word lookup (normalized to lowercase)
+  - `get_validation()` and `set_validation()` methods for validation result caching
+    - Caches LLM validation results by word, direction, expected and user answers
+    - Case-insensitive answer lookup
+  - Reduces API costs by avoiding repeated LLM calls for identical requests
+  - Comprehensive test suite with 25 tests (100% code coverage)
+    - Unit tests with mocks for all methods
+    - Integration tests with real SQLite database
+    - Tests for cache hits/misses, expiration, upsert, and case sensitivity
+  - Located at: `src/words/repositories/cache.py`
+  - Tests at: `tests/repositories/test_cache.py`
+
 - **Task 3.1: LLM Client** - OpenAI-based LLM client for word translation and answer validation
   - Base `LLMClient` class with async OpenAI integration
   - `translate_word()` method for getting word translations, examples, and word forms
