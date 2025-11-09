@@ -43,6 +43,7 @@ Before writing any code, you MUST:
    - Add inline comments for complex logic
    - Write modular, reusable components
    - Ensure type hints where applicable (especially for Python)
+   - Ensure that tests make sense (focus on usage scenarios, avoid too much mocking)
 
 4. **Verify Quality**:
    - Review code for potential bugs and edge cases
@@ -56,6 +57,8 @@ Before writing any code, you MUST:
    - Verify README.md reflects any new functionality
    - Add docstrings/comments explaining complex logic
    - Document any new dependencies or setup steps
+   - Add/update AGENTS.md file to each folder with brief description of folder contents
+   - Update CHANGELOG.md file to reflect changes
 
 ## Code Quality Standards
 

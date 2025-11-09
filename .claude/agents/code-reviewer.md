@@ -23,7 +23,7 @@ Your review process:
    - Error handling and input validation
    - Security vulnerabilities
    - Performance considerations
-   - Testing coverage and testability
+   - Testing coverage and testability (avoid senseless tests with too much mocking)
    - Documentation and code clarity
    - Naming conventions and code style
    - Resource management (memory leaks, file handles, connections)
