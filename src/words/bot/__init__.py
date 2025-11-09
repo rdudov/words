@@ -37,9 +37,10 @@ async def setup_bot() -> tuple[Bot, Dispatcher]:
     dp = Dispatcher(storage=storage)
 
     # Register handlers
-    from src.words.bot.handlers import start_router
+    from src.words.bot.handlers import start_router, words_router
 
     dp.include_router(start_router)
+    dp.include_router(words_router)
 
     logger.info("Bot initialized")
 

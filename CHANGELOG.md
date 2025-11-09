@@ -47,6 +47,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - All tests passing with 100% code coverage
 
 ### Added
+- **Task 3.6: Add Word Handler** - Telegram bot handlers for adding words to user vocabulary
+  - `cmd_add_word` handler for "➕ Add Word" button
+    - Displays instruction message to user
+    - Transitions to AddWordStates.waiting_for_word state
+  - `process_word_input` handler for word processing
+    - Validates word input (rejects empty or whitespace-only)
+    - Shows processing message during translation lookup
+    - Verifies user has active profile (redirects to registration if not)
+    - Sets up all required services (LLM, cache, translation, word)
+    - Implements automatic language detection with fallback:
+      - First tries target→native (word in learning language)
+      - Falls back to native→target (word in native language)
+    - Adds word to user vocabulary via WordService
+    - Formats and displays translation result with up to 2 examples
+    - Handles errors gracefully with user-friendly messages
+    - Clears FSM state when done
+  - Router registered in main bot setup
+  - HTML formatting for messages with bold word highlighting
+  - Comprehensive error handling and logging
+  - Comprehensive test suite with 19 tests (100% code coverage)
+    - Unit tests with mocks for both handlers
+    - Tests for state transitions
+    - Tests for successful word addition
+    - Tests for language detection (both directions)
+    - Tests for validation (empty input, whitespace)
+    - Tests for error handling and fallback
+    - Tests for user profile validation
+    - Tests for processing message display and deletion
+    - Tests for translation result formatting
+    - Integration tests for complete flow
+  - Located at: `src/words/bot/handlers/words.py`
+  - Tests at: `tests/bot/handlers/test_words.py`
+  - Exports: `src/words/bot/handlers/__init__.py` updated
+  - Registration: `src/words/bot/__init__.py` updated
+
 - **Task 3.5: Word Service** - Service layer for word management and vocabulary operations
   - `WordService` class orchestrating word management, translation, and statistics
   - `add_word_for_user()` method for adding words to user vocabulary
