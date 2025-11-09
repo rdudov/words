@@ -8,7 +8,7 @@ and basic functionality with real-world data.
 IMPORTANT:
 - These tests use real API calls which cost money
 - Run only when necessary: pytest -m e2e
-- Tests skip automatically if OPENAI_API_KEY is not set
+- Tests skip automatically if LLM_API_KEY is not set to a real API key
 - Keep tests minimal and focused to avoid unnecessary API costs
 
 Running E2E Tests:
@@ -22,7 +22,7 @@ Running E2E Tests:
     pytest -m "not e2e"
 
 Setting up API Key:
-    export OPENAI_API_KEY="sk-..."
+    export LLM_API_KEY="sk-..."
 """
 
 import os
@@ -36,31 +36,36 @@ def _has_api_key() -> bool:
     """
     Check if a real OpenAI API key is available for e2e testing.
 
-    We only check the OPENAI_API_KEY environment variable because:
-    - The conftest.py sets a fake test key in LLM_API_KEY by default
-    - We need to distinguish between test keys and real API keys
-    - Real API keys should be explicitly provided via OPENAI_API_KEY env var
+    Checks the LLM_API_KEY environment variable and validates that it's
+    a real OpenAI API key (starts with 'sk-') rather than the test key
+    set by conftest.py.
     """
-    env_key = os.getenv("OPENAI_API_KEY")
-    return bool(env_key and env_key.strip() and env_key.startswith("sk-"))
+    env_key = os.getenv("LLM_API_KEY")
+    # Exclude the test key set by conftest.py
+    return bool(env_key and env_key.strip() and
+                env_key.startswith("sk-") and
+                env_key != "test_api_key_12345")
 
 
 def _get_api_key() -> str:
     """Get the real API key for e2e testing."""
-    env_key = os.getenv("OPENAI_API_KEY")
-    if env_key and env_key.strip() and env_key.startswith("sk-"):
+    env_key = os.getenv("LLM_API_KEY")
+    # Exclude the test key set by conftest.py
+    if (env_key and env_key.strip() and
+        env_key.startswith("sk-") and
+        env_key != "test_api_key_12345"):
         return env_key
 
     raise ValueError(
         "No valid OpenAI API key available for e2e tests. "
-        "Set OPENAI_API_KEY environment variable to run e2e tests."
+        "Set LLM_API_KEY environment variable to a real API key (sk-...) to run e2e tests."
     )
 
 
 # Skip all tests in this module if no API key is available
 pytestmark = pytest.mark.skipif(
     not _has_api_key(),
-    reason="OpenAI API key not available for e2e tests. Set OPENAI_API_KEY environment variable."
+    reason="Real OpenAI API key not available for e2e tests. Set LLM_API_KEY to a real API key (sk-...)."
 )
 
 

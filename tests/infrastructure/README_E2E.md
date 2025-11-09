@@ -17,10 +17,10 @@ This directory contains end-to-end (e2e) tests that use the **real OpenAI API** 
 Set your OpenAI API key as an environment variable:
 
 ```bash
-export OPENAI_API_KEY="sk-..."
+export LLM_API_KEY="sk-..."
 ```
 
-**Note:** The API key must start with `sk-` to be recognized as a real key (not a test key).
+**Note:** The API key must start with `sk-` and must not be the test key (`test_api_key_12345`) to be recognized as a real key.
 
 ### Run E2E Tests
 
@@ -47,7 +47,7 @@ pytest
 
 ### Without API Key
 
-If you don't set `OPENAI_API_KEY`, the tests will be skipped automatically:
+If you don't set `LLM_API_KEY` to a real API key, the tests will be skipped automatically:
 
 ```bash
 $ pytest tests/infrastructure/test_llm_client_e2e.py -v
@@ -97,12 +97,12 @@ Each e2e test makes one API call:
 ### Tests are skipped even with API key set
 
 Make sure your API key:
-- Is set as `OPENAI_API_KEY` environment variable (not `LLM_API_KEY`)
-- Starts with `sk-`
+- Is set as `LLM_API_KEY` environment variable
+- Starts with `sk-` (real key, not the test key "test_api_key_12345")
 - Is exported in your current shell session
 
 ```bash
-echo $OPENAI_API_KEY  # Should print your key
+echo $LLM_API_KEY  # Should print your key
 ```
 
 ### Tests fail with "Access denied"
@@ -172,6 +172,6 @@ test-e2e:
   # Run only on main branch or schedule
   if: github.ref == 'refs/heads/main'
   env:
-    OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
   run: pytest -m e2e
 ```

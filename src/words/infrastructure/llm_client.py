@@ -32,7 +32,9 @@ class TranslationResponse(BaseModel):
     word: str = Field(..., min_length=1)
     translations: list[str] = Field(..., min_length=1)
     examples: list[ExampleSentence]
-    word_forms: dict[str, str]
+    # word_forms allows None values because not all forms apply to all words
+    # (e.g., nouns don't have comparative, adjectives don't have plural)
+    word_forms: dict[str, Optional[str]]
 
 
 class ValidationResponse(BaseModel):
