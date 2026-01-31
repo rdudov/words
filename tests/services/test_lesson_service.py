@@ -8,7 +8,7 @@ and answer processing using a real database.
 import pytest
 from unittest.mock import AsyncMock
 
-from src.words.config.constants import Direction, TestType
+from src.words.config.constants import Direction, TestType as LessonTestType
 from src.words.config.settings import settings
 from src.words.models import (
     User,
@@ -96,7 +96,7 @@ async def test_lesson_flow_records_attempt_and_updates_stats(
     selected_words = await user_word_repo.get_user_words_for_lesson(profile.profile_id)
     question = await lesson_service.generate_next_question(lesson, selected_words)
     assert question is not None
-    assert question.test_type == TestType.MULTIPLE_CHOICE.value
+    assert question.test_type == LessonTestType.MULTIPLE_CHOICE.value
     assert question.options is not None
     assert question.expected_answer in question.options
 
@@ -184,5 +184,5 @@ async def test_question_switches_to_input_after_threshold(
     question = await lesson_service.generate_next_question(lesson, selected_words)
 
     assert question is not None
-    assert question.test_type == TestType.INPUT.value
+    assert question.test_type == LessonTestType.INPUT.value
     assert question.options is None
