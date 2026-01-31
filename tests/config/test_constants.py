@@ -25,13 +25,6 @@ class TestWordStatus:
         assert WordStatus.REVIEWING == "reviewing"
         assert WordStatus.MASTERED == "mastered"
 
-    def test_word_status_attributes_exist(self):
-        """Test that all expected WordStatus attributes exist."""
-        assert hasattr(WordStatus, "NEW")
-        assert hasattr(WordStatus, "LEARNING")
-        assert hasattr(WordStatus, "REVIEWING")
-        assert hasattr(WordStatus, "MASTERED")
-
     def test_word_status_is_enum(self):
         """Test that WordStatus is an Enum."""
         assert issubclass(WordStatus, Enum)
@@ -50,11 +43,6 @@ class TestTestType:
         assert TestType.MULTIPLE_CHOICE == "multiple_choice"
         assert TestType.INPUT == "input"
 
-    def test_test_type_attributes_exist(self):
-        """Test that all expected TestType attributes exist."""
-        assert hasattr(TestType, "MULTIPLE_CHOICE")
-        assert hasattr(TestType, "INPUT")
-
     def test_test_type_is_enum(self):
         """Test that TestType is an Enum."""
         assert issubclass(TestType, Enum)
@@ -67,11 +55,6 @@ class TestDirection:
         """Test that Direction has correct values."""
         assert Direction.NATIVE_TO_FOREIGN == "native_to_foreign"
         assert Direction.FOREIGN_TO_NATIVE == "foreign_to_native"
-
-    def test_direction_attributes_exist(self):
-        """Test that all expected Direction attributes exist."""
-        assert hasattr(Direction, "NATIVE_TO_FOREIGN")
-        assert hasattr(Direction, "FOREIGN_TO_NATIVE")
 
     def test_direction_is_enum(self):
         """Test that Direction is an Enum."""
@@ -86,12 +69,6 @@ class TestValidationMethod:
         assert ValidationMethod.EXACT == "exact"
         assert ValidationMethod.FUZZY == "fuzzy"
         assert ValidationMethod.LLM == "llm"
-
-    def test_validation_method_attributes_exist(self):
-        """Test that all expected ValidationMethod attributes exist."""
-        assert hasattr(ValidationMethod, "EXACT")
-        assert hasattr(ValidationMethod, "FUZZY")
-        assert hasattr(ValidationMethod, "LLM")
 
     def test_validation_method_is_enum(self):
         """Test that ValidationMethod is an Enum."""

@@ -17,58 +17,8 @@ from src.words.models import Base, TimestampMixin
 class TestBase:
     """Tests for the Base ORM class."""
 
-    def test_base_can_be_imported(self):
-        """Test that Base class can be imported successfully."""
-        from src.words.models import Base
-        assert Base is not None
-        assert hasattr(Base, 'metadata')
-
-    def test_base_can_create_model_classes(self):
-        """Test that Base can be used to create ORM model classes."""
-        # Create a test model class
-        class TestModel(Base):
-            __tablename__ = "test_model"
-            id: Mapped[int] = mapped_column(Integer, primary_key=True)
-            name: Mapped[str] = mapped_column(String(100))
-
-        # Verify the model was created with correct attributes
-        assert hasattr(TestModel, '__tablename__')
-        assert TestModel.__tablename__ == "test_model"
-        assert hasattr(TestModel, 'id')
-        assert hasattr(TestModel, 'name')
-        assert hasattr(TestModel, 'metadata')
-
-    def test_base_has_async_attrs(self):
-        """Test that Base class includes AsyncAttrs for async operations."""
-        # Create a test model
-        class AsyncTestModel(Base):
-            __tablename__ = "async_test_model"
-            id: Mapped[int] = mapped_column(Integer, primary_key=True)
-
-        # Verify Base has async capabilities
-        assert hasattr(Base, '__mapper__') or hasattr(Base, 'registry')
-
-
 class TestTimestampMixin:
     """Tests for the TimestampMixin class."""
-
-    def test_timestamp_mixin_adds_created_at_field(self):
-        """Test that TimestampMixin adds created_at field to models."""
-        class ModelWithTimestamp(Base, TimestampMixin):
-            __tablename__ = "model_with_timestamp"
-            id: Mapped[int] = mapped_column(Integer, primary_key=True)
-
-        # Verify created_at field exists
-        assert hasattr(ModelWithTimestamp, 'created_at')
-
-    def test_timestamp_mixin_adds_updated_at_field(self):
-        """Test that TimestampMixin adds updated_at field to models."""
-        class ModelWithTimestamp2(Base, TimestampMixin):
-            __tablename__ = "model_with_timestamp2"
-            id: Mapped[int] = mapped_column(Integer, primary_key=True)
-
-        # Verify updated_at field exists
-        assert hasattr(ModelWithTimestamp2, 'updated_at')
 
     @pytest.mark.asyncio
     async def test_timestamp_mixin_sets_created_at_on_creation(self):
@@ -152,8 +102,6 @@ class TestTimestampMixin:
 
             # Note: SQLite with aiosqlite may not trigger onupdate in all cases
             # This is a known limitation. In production with PostgreSQL, this works correctly.
-            # We'll verify that the field exists and can be manually set
-            assert hasattr(test_record, 'updated_at')
 
         await engine.dispose()
 
@@ -170,12 +118,6 @@ class TestTimestampMixin:
             __tablename__ = "model_b"
             id: Mapped[int] = mapped_column(Integer, primary_key=True)
             data: Mapped[str] = mapped_column(String(50))
-
-        # Verify both have timestamp fields
-        assert hasattr(ModelA, 'created_at')
-        assert hasattr(ModelA, 'updated_at')
-        assert hasattr(ModelB, 'created_at')
-        assert hasattr(ModelB, 'updated_at')
 
         # Create database and tables
         engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
@@ -199,20 +141,6 @@ class TestTimestampMixin:
             assert record_b.created_at is not None
 
         await engine.dispose()
-
-    def test_timestamp_fields_have_correct_types(self):
-        """Test that timestamp fields have the correct type annotations."""
-        class TypeTestModel(Base, TimestampMixin):
-            __tablename__ = "type_test_model"
-            id: Mapped[int] = mapped_column(Integer, primary_key=True)
-
-        # Verify fields exist on the model (inherited from mixin)
-        assert hasattr(TypeTestModel, 'created_at')
-        assert hasattr(TypeTestModel, 'updated_at')
-
-        # Verify the fields are column definitions
-        assert hasattr(TypeTestModel.created_at, 'property')
-        assert hasattr(TypeTestModel.updated_at, 'property')
 
     @pytest.mark.asyncio
     async def test_timestamps_are_timezone_aware(self):

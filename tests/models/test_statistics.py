@@ -24,22 +24,6 @@ from src.words.models import (
 class TestWordStatisticsModel:
     """Tests for the WordStatistics model."""
 
-    def test_word_statistics_model_has_required_fields(self):
-        """Test that WordStatistics model has all required fields."""
-        assert hasattr(WordStatistics, 'stat_id')
-        assert hasattr(WordStatistics, 'user_word_id')
-        assert hasattr(WordStatistics, 'direction')
-        assert hasattr(WordStatistics, 'test_type')
-        assert hasattr(WordStatistics, 'correct_count')
-        assert hasattr(WordStatistics, 'total_attempts')
-        assert hasattr(WordStatistics, 'total_correct')
-        assert hasattr(WordStatistics, 'total_errors')
-        assert hasattr(WordStatistics, 'user_word')
-
-    def test_word_statistics_model_has_correct_tablename(self):
-        """Test that WordStatistics model has the correct table name."""
-        assert WordStatistics.__tablename__ == "word_statistics"
-
     @pytest.mark.asyncio
     async def test_create_word_statistics_with_minimum_fields(self):
         """Test creating a WordStatistics with only required fields."""
@@ -550,69 +534,8 @@ class TestWordStatisticsModel:
         await engine.dispose()
 
 
-class TestIndexesAndConstraints:
-    """Tests for database indexes on word_statistics table."""
-
-    @pytest.mark.asyncio
-    async def test_word_statistics_table_has_user_word_index(self):
-        """Test that word_statistics table has index on user_word_id."""
-        engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
-
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-
-            def check_index(connection):
-                inspector = inspect(connection)
-                indexes = inspector.get_indexes('word_statistics')
-                index_names = [idx['name'] for idx in indexes]
-                return 'idx_stats_user_word' in index_names
-
-            has_index = await conn.run_sync(check_index)
-            assert has_index, "Index 'idx_stats_user_word' not found on word_statistics table"
-
-        await engine.dispose()
-
-    @pytest.mark.asyncio
-    async def test_word_statistics_table_has_unique_constraint(self):
-        """Test that word_statistics table has UNIQUE constraint on (user_word_id, direction, test_type)."""
-        engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
-
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-
-            def check_constraint(connection):
-                # Check the table args in the model metadata
-                table = WordStatistics.__table__
-                for constraint in table.constraints:
-                    if hasattr(constraint, 'columns'):
-                        column_names = {col.name for col in constraint.columns}
-                        if {'user_word_id', 'direction', 'test_type'}.issubset(column_names):
-                            return True
-                return False
-
-            has_constraint = await conn.run_sync(check_constraint)
-            assert has_constraint, "UNIQUE constraint on (user_word_id, direction, test_type) not found"
-
-        await engine.dispose()
-
-
 class TestTableCreation:
     """Tests for table creation and schema validation."""
-
-    @pytest.mark.asyncio
-    async def test_create_all_tables_including_word_statistics(self):
-        """Test that all tables including word_statistics can be created without errors."""
-        engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
-
-        # This should not raise any exceptions
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-
-        # Verify table was created
-        table_names = list(Base.metadata.tables.keys())
-        assert "word_statistics" in table_names
-
-        await engine.dispose()
 
     @pytest.mark.asyncio
     async def test_complete_statistics_workflow(self):

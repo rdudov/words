@@ -40,23 +40,6 @@ class TestWordServiceInitialization:
         assert service.user_word_repo is mock_user_word_repo
         assert service.translation_service is mock_translation_service
 
-    @pytest.mark.asyncio
-    async def test_word_service_stores_dependencies(self):
-        """Test that WordService stores dependency references."""
-        mock_word_repo = AsyncMock(spec=WordRepository)
-        mock_user_word_repo = AsyncMock(spec=UserWordRepository)
-        mock_translation_service = AsyncMock(spec=TranslationService)
-
-        service = WordService(
-            mock_word_repo,
-            mock_user_word_repo,
-            mock_translation_service
-        )
-
-        assert hasattr(service, 'word_repo')
-        assert hasattr(service, 'user_word_repo')
-        assert hasattr(service, 'translation_service')
-
 
 class TestAddWordForUser:
     """Tests for add_word_for_user method."""

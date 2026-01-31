@@ -31,20 +31,6 @@ class TestUserRepositoryInitialization:
         assert repo.session is mock_session
         assert repo.model is User
 
-    @pytest.mark.asyncio
-    async def test_user_repository_inherits_from_base(self):
-        """Test that UserRepository inherits BaseRepository methods."""
-        mock_session = AsyncMock(spec=AsyncSession)
-        repo = UserRepository(mock_session)
-
-        # Check that base methods are available
-        assert hasattr(repo, 'get_by_id')
-        assert hasattr(repo, 'get_all')
-        assert hasattr(repo, 'add')
-        assert hasattr(repo, 'delete')
-        assert hasattr(repo, 'commit')
-        assert hasattr(repo, 'rollback')
-
 
 class TestGetByTelegramId:
     """Tests for get_by_telegram_id method."""
@@ -220,18 +206,6 @@ class TestProfileRepositoryInitialization:
 
         assert repo.session is mock_session
         assert repo.model is LanguageProfile
-
-    @pytest.mark.asyncio
-    async def test_profile_repository_inherits_from_base(self):
-        """Test that ProfileRepository inherits BaseRepository methods."""
-        mock_session = AsyncMock(spec=AsyncSession)
-        repo = ProfileRepository(mock_session)
-
-        # Check that base methods are available
-        assert hasattr(repo, 'get_by_id')
-        assert hasattr(repo, 'get_all')
-        assert hasattr(repo, 'add')
-        assert hasattr(repo, 'delete')
 
 
 class TestGetActiveProfile:

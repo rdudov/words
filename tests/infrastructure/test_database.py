@@ -110,8 +110,6 @@ class TestSessionFactory:
         # The expire_on_commit property is set on the session factory, not the session instance
         # We can verify it through the session's internal state
         session = AsyncSessionLocal()
-        # Check if the underlying sync session has the correct setting
-        assert hasattr(session, 'sync_session')
         # Note: This is set at factory level and affects behavior, so we just verify the session is created
         assert session is not None
 

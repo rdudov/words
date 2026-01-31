@@ -36,17 +36,6 @@ class TestUserServiceInitialization:
         assert service.user_repo is mock_user_repo
         assert service.profile_repo is mock_profile_repo
 
-    @pytest.mark.asyncio
-    async def test_user_service_stores_repositories(self):
-        """Test that UserService stores repository references."""
-        mock_user_repo = AsyncMock(spec=UserRepository)
-        mock_profile_repo = AsyncMock(spec=ProfileRepository)
-
-        service = UserService(mock_user_repo, mock_profile_repo)
-
-        assert hasattr(service, 'user_repo')
-        assert hasattr(service, 'profile_repo')
-
 
 class TestRegisterUser:
     """Tests for register_user method."""

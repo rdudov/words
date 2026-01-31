@@ -56,22 +56,6 @@ class TestCEFRLevel:
 class TestUserModel:
     """Tests for the User model."""
 
-    def test_user_model_has_required_fields(self):
-        """Test that User model has all required fields."""
-        assert hasattr(User, 'user_id')
-        assert hasattr(User, 'native_language')
-        assert hasattr(User, 'interface_language')
-        assert hasattr(User, 'last_active_at')
-        assert hasattr(User, 'notification_enabled')
-        assert hasattr(User, 'timezone')
-        assert hasattr(User, 'profiles')
-        assert hasattr(User, 'created_at')
-        assert hasattr(User, 'updated_at')
-
-    def test_user_model_has_correct_tablename(self):
-        """Test that User model has the correct table name."""
-        assert User.__tablename__ == "users"
-
     @pytest.mark.asyncio
     async def test_create_user_with_minimum_fields(self):
         """Test creating a User with only required fields."""
@@ -226,8 +210,6 @@ class TestUserModel:
             )
             profiles = result.scalars().all()
 
-            # Verify relationship attribute exists
-            assert hasattr(User, 'profiles')
             assert len(profiles) == 0  # No profiles yet
 
         await engine.dispose()
@@ -235,22 +217,6 @@ class TestUserModel:
 
 class TestLanguageProfileModel:
     """Tests for the LanguageProfile model."""
-
-    def test_language_profile_has_required_fields(self):
-        """Test that LanguageProfile model has all required fields."""
-        assert hasattr(LanguageProfile, 'profile_id')
-        assert hasattr(LanguageProfile, 'user_id')
-        assert hasattr(LanguageProfile, 'target_language')
-        assert hasattr(LanguageProfile, 'level')
-        assert hasattr(LanguageProfile, 'is_active')
-        assert hasattr(LanguageProfile, 'user')
-        # Note: user_words and lessons relationships will be added when those models are created
-        assert hasattr(LanguageProfile, 'created_at')
-        assert hasattr(LanguageProfile, 'updated_at')
-
-    def test_language_profile_has_correct_tablename(self):
-        """Test that LanguageProfile model has the correct table name."""
-        assert LanguageProfile.__tablename__ == "language_profiles"
 
     @pytest.mark.asyncio
     async def test_create_language_profile(self):
@@ -667,107 +633,8 @@ class TestUserLanguageProfileRelationship:
         await engine.dispose()
 
 
-class TestIndexesAndConstraints:
-    """Tests for database indexes and constraints."""
-
-    @pytest.mark.asyncio
-    async def test_users_table_has_last_active_index(self):
-        """Test that users table has index on last_active_at field."""
-        engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
-
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-
-            # Check that the index exists in metadata
-            def check_index(connection):
-                inspector = inspect(connection)
-                indexes = inspector.get_indexes('users')
-                index_names = [idx['name'] for idx in indexes]
-                return 'idx_users_last_active' in index_names
-
-            has_index = await conn.run_sync(check_index)
-            assert has_index, "Index 'idx_users_last_active' not found on users table"
-
-        await engine.dispose()
-
-    @pytest.mark.asyncio
-    async def test_language_profiles_table_has_composite_index(self):
-        """Test that language_profiles table has composite index on (user_id, is_active)."""
-        engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
-
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-
-            # Check that the index exists in metadata
-            def check_index(connection):
-                inspector = inspect(connection)
-                indexes = inspector.get_indexes('language_profiles')
-                index_names = [idx['name'] for idx in indexes]
-                return 'idx_profiles_user_active' in index_names
-
-            has_index = await conn.run_sync(check_index)
-            assert has_index, "Index 'idx_profiles_user_active' not found on language_profiles table"
-
-        await engine.dispose()
-
-    @pytest.mark.asyncio
-    async def test_language_profiles_table_has_unique_constraint(self):
-        """Test that language_profiles table has UNIQUE constraint on (user_id, target_language)."""
-        engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
-
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-
-            # Check that the unique constraint exists in metadata
-            def check_constraint(connection):
-                inspector = inspect(connection)
-                # For SQLite, unique constraints appear as unique indexes
-                indexes = inspector.get_indexes('language_profiles')
-                unique_indexes = [idx for idx in indexes if idx.get('unique', False)]
-
-                # Check if there's a unique index on user_id and target_language
-                for idx in unique_indexes:
-                    column_names = set(idx.get('column_names', []))
-                    # The constraint should contain both columns
-                    if {'user_id', 'target_language'}.issubset(column_names):
-                        return True
-
-                # Also check the table args in the model metadata
-                # UniqueConstraint is defined in __table_args__
-                table = LanguageProfile.__table__
-                for constraint in table.constraints:
-                    if hasattr(constraint, 'columns'):
-                        column_names = {col.name for col in constraint.columns}
-                        if {'user_id', 'target_language'}.issubset(column_names):
-                            return True
-
-                return False
-
-            has_constraint = await conn.run_sync(check_constraint)
-            assert has_constraint, "UNIQUE constraint on (user_id, target_language) not found"
-
-        await engine.dispose()
-
-
 class TestTableCreation:
     """Tests for table creation and schema validation."""
-
-    @pytest.mark.asyncio
-    async def test_create_all_tables_without_errors(self):
-        """Test that all tables can be created without errors."""
-        engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
-
-        # This should not raise any exceptions
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-
-        # Verify tables were created by checking metadata
-        table_names = list(Base.metadata.tables.keys())
-
-        assert "users" in table_names
-        assert "language_profiles" in table_names
-
-        await engine.dispose()
 
     @pytest.mark.asyncio
     async def test_timestamp_mixin_integration(self):

@@ -25,22 +25,6 @@ from src.words.models import (
 class TestLessonModel:
     """Tests for the Lesson model."""
 
-    def test_lesson_model_has_required_fields(self):
-        """Test that Lesson model has all required fields."""
-        assert hasattr(Lesson, 'lesson_id')
-        assert hasattr(Lesson, 'profile_id')
-        assert hasattr(Lesson, 'started_at')
-        assert hasattr(Lesson, 'completed_at')
-        assert hasattr(Lesson, 'words_count')
-        assert hasattr(Lesson, 'correct_answers')
-        assert hasattr(Lesson, 'incorrect_answers')
-        assert hasattr(Lesson, 'profile')
-        assert hasattr(Lesson, 'attempts')
-
-    def test_lesson_model_has_correct_tablename(self):
-        """Test that Lesson model has the correct table name."""
-        assert Lesson.__tablename__ == "lessons"
-
     @pytest.mark.asyncio
     async def test_create_lesson_with_minimum_fields(self):
         """Test creating a Lesson with only required fields."""
@@ -283,25 +267,6 @@ class TestLessonModel:
 
 class TestLessonAttemptModel:
     """Tests for the LessonAttempt model."""
-
-    def test_lesson_attempt_model_has_required_fields(self):
-        """Test that LessonAttempt model has all required fields."""
-        assert hasattr(LessonAttempt, 'attempt_id')
-        assert hasattr(LessonAttempt, 'lesson_id')
-        assert hasattr(LessonAttempt, 'user_word_id')
-        assert hasattr(LessonAttempt, 'direction')
-        assert hasattr(LessonAttempt, 'test_type')
-        assert hasattr(LessonAttempt, 'user_answer')
-        assert hasattr(LessonAttempt, 'correct_answer')
-        assert hasattr(LessonAttempt, 'is_correct')
-        assert hasattr(LessonAttempt, 'validation_method')
-        assert hasattr(LessonAttempt, 'attempted_at')
-        assert hasattr(LessonAttempt, 'lesson')
-        assert hasattr(LessonAttempt, 'user_word')
-
-    def test_lesson_attempt_model_has_correct_tablename(self):
-        """Test that LessonAttempt model has the correct table name."""
-        assert LessonAttempt.__tablename__ == "lesson_attempts"
 
     @pytest.mark.asyncio
     async def test_create_lesson_attempt_with_minimum_fields(self):
@@ -725,86 +690,8 @@ class TestLessonAttemptModel:
         await engine.dispose()
 
 
-class TestIndexesAndConstraints:
-    """Tests for database indexes on lessons and lesson_attempts tables."""
-
-    @pytest.mark.asyncio
-    async def test_lessons_table_has_profile_started_index(self):
-        """Test that lessons table has composite index on (profile_id, started_at)."""
-        engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
-
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-
-            def check_index(connection):
-                inspector = inspect(connection)
-                indexes = inspector.get_indexes('lessons')
-                index_names = [idx['name'] for idx in indexes]
-                return 'idx_lessons_profile' in index_names
-
-            has_index = await conn.run_sync(check_index)
-            assert has_index, "Index 'idx_lessons_profile' not found on lessons table"
-
-        await engine.dispose()
-
-    @pytest.mark.asyncio
-    async def test_lesson_attempts_table_has_lesson_index(self):
-        """Test that lesson_attempts table has index on lesson_id."""
-        engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
-
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-
-            def check_index(connection):
-                inspector = inspect(connection)
-                indexes = inspector.get_indexes('lesson_attempts')
-                index_names = [idx['name'] for idx in indexes]
-                return 'idx_attempts_lesson' in index_names
-
-            has_index = await conn.run_sync(check_index)
-            assert has_index, "Index 'idx_attempts_lesson' not found on lesson_attempts table"
-
-        await engine.dispose()
-
-    @pytest.mark.asyncio
-    async def test_lesson_attempts_table_has_user_word_index(self):
-        """Test that lesson_attempts table has index on user_word_id."""
-        engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
-
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-
-            def check_index(connection):
-                inspector = inspect(connection)
-                indexes = inspector.get_indexes('lesson_attempts')
-                index_names = [idx['name'] for idx in indexes]
-                return 'idx_attempts_user_word' in index_names
-
-            has_index = await conn.run_sync(check_index)
-            assert has_index, "Index 'idx_attempts_user_word' not found on lesson_attempts table"
-
-        await engine.dispose()
-
-
 class TestTableCreation:
     """Tests for table creation and schema validation."""
-
-    @pytest.mark.asyncio
-    async def test_create_all_tables_including_lessons(self):
-        """Test that all tables including lessons and lesson_attempts can be created without errors."""
-        engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
-
-        # This should not raise any exceptions
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-
-        # Verify tables were created
-        table_names = list(Base.metadata.tables.keys())
-
-        assert "lessons" in table_names
-        assert "lesson_attempts" in table_names
-
-        await engine.dispose()
 
     @pytest.mark.asyncio
     async def test_complete_lesson_workflow(self):

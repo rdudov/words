@@ -33,17 +33,6 @@ class TestTranslationServiceInitialization:
         assert service.llm_client is mock_llm_client
         assert service.cache_repo is mock_cache_repo
 
-    @pytest.mark.asyncio
-    async def test_translation_service_stores_dependencies(self):
-        """Test that TranslationService stores dependency references."""
-        mock_llm_client = AsyncMock(spec=LLMClient)
-        mock_cache_repo = AsyncMock(spec=CacheRepository)
-
-        service = TranslationService(mock_llm_client, mock_cache_repo)
-
-        assert hasattr(service, 'llm_client')
-        assert hasattr(service, 'cache_repo')
-
 
 class TestTranslateWord:
     """Tests for translate_word method."""

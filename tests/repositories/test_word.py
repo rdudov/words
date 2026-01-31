@@ -62,20 +62,6 @@ class TestWordRepositoryInitialization:
         assert repo.session is mock_session
         assert repo.model is Word
 
-    @pytest.mark.asyncio
-    async def test_word_repository_inherits_from_base(self):
-        """Test that WordRepository inherits BaseRepository methods."""
-        mock_session = AsyncMock(spec=AsyncSession)
-        repo = WordRepository(mock_session)
-
-        # Check that base methods are available
-        assert hasattr(repo, 'get_by_id')
-        assert hasattr(repo, 'get_all')
-        assert hasattr(repo, 'add')
-        assert hasattr(repo, 'delete')
-        assert hasattr(repo, 'commit')
-        assert hasattr(repo, 'rollback')
-
 
 class TestFindByTextAndLanguage:
     """Tests for find_by_text_and_language method."""
@@ -247,20 +233,6 @@ class TestUserWordRepositoryInitialization:
 
         assert repo.session is mock_session
         assert repo.model is UserWord
-
-    @pytest.mark.asyncio
-    async def test_user_word_repository_inherits_from_base(self):
-        """Test that UserWordRepository inherits BaseRepository methods."""
-        mock_session = AsyncMock(spec=AsyncSession)
-        repo = UserWordRepository(mock_session)
-
-        # Check that base methods are available
-        assert hasattr(repo, 'get_by_id')
-        assert hasattr(repo, 'get_all')
-        assert hasattr(repo, 'add')
-        assert hasattr(repo, 'delete')
-        assert hasattr(repo, 'commit')
-        assert hasattr(repo, 'rollback')
 
 
 class TestGetUserWord:

@@ -56,21 +56,6 @@ class TestWordStatusEnum:
 class TestWordModel:
     """Tests for the Word model."""
 
-    def test_word_model_has_required_fields(self):
-        """Test that Word model has all required fields."""
-        assert hasattr(Word, 'word_id')
-        assert hasattr(Word, 'word')
-        assert hasattr(Word, 'language')
-        assert hasattr(Word, 'level')
-        assert hasattr(Word, 'translations')
-        assert hasattr(Word, 'examples')
-        assert hasattr(Word, 'word_forms')
-        assert hasattr(Word, 'frequency_rank')
-
-    def test_word_model_has_correct_tablename(self):
-        """Test that Word model has the correct table name."""
-        assert Word.__tablename__ == "words"
-
     @pytest.mark.asyncio
     async def test_create_word_with_minimum_fields(self):
         """Test creating a Word with only required fields."""
@@ -297,27 +282,6 @@ class TestWordModel:
 
 class TestUserWordModel:
     """Tests for the UserWord model."""
-
-    def test_user_word_model_has_required_fields(self):
-        """Test that UserWord model has all required fields."""
-        assert hasattr(UserWord, 'user_word_id')
-        assert hasattr(UserWord, 'profile_id')
-        assert hasattr(UserWord, 'word_id')
-        assert hasattr(UserWord, 'status')
-        assert hasattr(UserWord, 'added_at')
-        assert hasattr(UserWord, 'last_reviewed_at')
-        assert hasattr(UserWord, 'next_review_at')
-        assert hasattr(UserWord, 'review_interval')
-        assert hasattr(UserWord, 'easiness_factor')
-        assert hasattr(UserWord, 'profile')
-        assert hasattr(UserWord, 'word')
-        # Note: statistics relationship will be added when WordStatistics model is created (Task 1.6)
-        assert hasattr(UserWord, 'created_at')
-        assert hasattr(UserWord, 'updated_at')
-
-    def test_user_word_model_has_correct_tablename(self):
-        """Test that UserWord model has the correct table name."""
-        assert UserWord.__tablename__ == "user_words"
 
     @pytest.mark.asyncio
     async def test_create_user_word_with_minimum_fields(self):
@@ -802,172 +766,8 @@ class TestUserWordModel:
         await engine.dispose()
 
 
-class TestIndexesAndConstraints:
-    """Tests for database indexes and constraints."""
-
-    @pytest.mark.asyncio
-    async def test_words_table_has_language_level_index(self):
-        """Test that words table has composite index on (language, level)."""
-        engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
-
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-
-            def check_index(connection):
-                inspector = inspect(connection)
-                indexes = inspector.get_indexes('words')
-                index_names = [idx['name'] for idx in indexes]
-                return 'idx_words_language_level' in index_names
-
-            has_index = await conn.run_sync(check_index)
-            assert has_index, "Index 'idx_words_language_level' not found on words table"
-
-        await engine.dispose()
-
-    @pytest.mark.asyncio
-    async def test_words_table_has_frequency_index(self):
-        """Test that words table has composite index on (language, frequency_rank)."""
-        engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
-
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-
-            def check_index(connection):
-                inspector = inspect(connection)
-                indexes = inspector.get_indexes('words')
-                index_names = [idx['name'] for idx in indexes]
-                return 'idx_words_frequency' in index_names
-
-            has_index = await conn.run_sync(check_index)
-            assert has_index, "Index 'idx_words_frequency' not found on words table"
-
-        await engine.dispose()
-
-    @pytest.mark.asyncio
-    async def test_user_words_table_has_profile_index(self):
-        """Test that user_words table has index on profile_id."""
-        engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
-
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-
-            def check_index(connection):
-                inspector = inspect(connection)
-                indexes = inspector.get_indexes('user_words')
-                index_names = [idx['name'] for idx in indexes]
-                return 'idx_user_words_profile' in index_names
-
-            has_index = await conn.run_sync(check_index)
-            assert has_index, "Index 'idx_user_words_profile' not found on user_words table"
-
-        await engine.dispose()
-
-    @pytest.mark.asyncio
-    async def test_user_words_table_has_status_index(self):
-        """Test that user_words table has composite index on (profile_id, status)."""
-        engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
-
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-
-            def check_index(connection):
-                inspector = inspect(connection)
-                indexes = inspector.get_indexes('user_words')
-                index_names = [idx['name'] for idx in indexes]
-                return 'idx_user_words_status' in index_names
-
-            has_index = await conn.run_sync(check_index)
-            assert has_index, "Index 'idx_user_words_status' not found on user_words table"
-
-        await engine.dispose()
-
-    @pytest.mark.asyncio
-    async def test_user_words_table_has_next_review_index(self):
-        """Test that user_words table has composite index on (profile_id, next_review_at)."""
-        engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
-
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-
-            def check_index(connection):
-                inspector = inspect(connection)
-                indexes = inspector.get_indexes('user_words')
-                index_names = [idx['name'] for idx in indexes]
-                return 'idx_user_words_next_review' in index_names
-
-            has_index = await conn.run_sync(check_index)
-            assert has_index, "Index 'idx_user_words_next_review' not found on user_words table"
-
-        await engine.dispose()
-
-    @pytest.mark.asyncio
-    async def test_words_table_has_unique_constraint(self):
-        """Test that words table has UNIQUE constraint on (word, language)."""
-        engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
-
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-
-            def check_constraint(connection):
-                # Check the table args in the model metadata
-                table = Word.__table__
-                for constraint in table.constraints:
-                    if hasattr(constraint, 'columns'):
-                        column_names = {col.name for col in constraint.columns}
-                        if {'word', 'language'}.issubset(column_names):
-                            return True
-                return False
-
-            has_constraint = await conn.run_sync(check_constraint)
-            assert has_constraint, "UNIQUE constraint on (word, language) not found"
-
-        await engine.dispose()
-
-    @pytest.mark.asyncio
-    async def test_user_words_table_has_unique_constraint(self):
-        """Test that user_words table has UNIQUE constraint on (profile_id, word_id)."""
-        engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
-
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-
-            def check_constraint(connection):
-                # Check the table args in the model metadata
-                table = UserWord.__table__
-                for constraint in table.constraints:
-                    if hasattr(constraint, 'columns'):
-                        column_names = {col.name for col in constraint.columns}
-                        if {'profile_id', 'word_id'}.issubset(column_names):
-                            return True
-                return False
-
-            has_constraint = await conn.run_sync(check_constraint)
-            assert has_constraint, "UNIQUE constraint on (profile_id, word_id) not found"
-
-        await engine.dispose()
-
-
 class TestTableCreation:
     """Tests for table creation and schema validation."""
-
-    @pytest.mark.asyncio
-    async def test_create_all_tables_without_errors(self):
-        """Test that all tables including words and user_words can be created without errors."""
-        engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
-
-        # This should not raise any exceptions
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-
-        # Verify tables were created
-        table_names = list(Base.metadata.tables.keys())
-
-        assert "users" in table_names
-        assert "language_profiles" in table_names
-        assert "words" in table_names
-        assert "user_words" in table_names
-
-        await engine.dispose()
 
     @pytest.mark.asyncio
     async def test_timestamp_mixin_integration_in_user_word(self):

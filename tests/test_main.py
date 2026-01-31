@@ -386,19 +386,6 @@ class TestImports:
         assert main is not None
         assert callable(main)
 
-    def test_main_imports_are_correct(self):
-        """Test that __main__ imports required dependencies."""
-        import words.__main__
-
-        # Verify that necessary imports are available
-        assert hasattr(words.__main__, "asyncio")
-        assert hasattr(words.__main__, "sys")
-        assert hasattr(words.__main__, "Path")
-        assert hasattr(words.__main__, "setup_bot")
-        assert hasattr(words.__main__, "init_db")
-        assert hasattr(words.__main__, "close_db")
-        assert hasattr(words.__main__, "logger")
-
 
 class TestPathSetup:
     """Tests for sys.path manipulation."""
