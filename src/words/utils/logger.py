@@ -30,6 +30,9 @@ class EventLogger:
     def error(self, event: str, **kwargs) -> None:
         self._logger.error(event, extra=kwargs)
 
+    def exception(self, event: str, **kwargs) -> None:
+        self._logger.exception(event, extra=kwargs)
+
 
 def get_event_logger(name: str) -> EventLogger:
     """Return an EventLogger wrapper for a named logger."""

@@ -10,6 +10,7 @@ from sqlalchemy import select, and_, func
 from sqlalchemy.orm import selectinload
 from .base import BaseRepository
 from src.words.models.word import Word, UserWord, WordStatusEnum
+from src.words.models.user import LanguageProfile
 
 
 class WordRepository(BaseRepository[Word]):
@@ -160,6 +161,36 @@ class UserWordRepository(BaseRepository[UserWord]):
             )
         )
         return result.scalar_one_or_none()
+
+    async def get_by_id_with_details(self, user_word_id: int) -> UserWord | None:
+        """Get user word by id with word, statistics, and profile loaded."""
+        result = await self.session.execute(
+            select(UserWord).where(
+                UserWord.user_word_id == user_word_id
+            ).options(
+                selectinload(UserWord.word),
+                selectinload(UserWord.statistics),
+                selectinload(UserWord.profile).selectinload(LanguageProfile.user)
+            )
+        )
+        return result.scalar_one_or_none()
+
+    async def get_user_words_for_lesson(
+        self,
+        profile_id: int,
+        limit: int = 30
+    ) -> list[UserWord]:
+        """Get user words for lesson with all required relationships loaded."""
+        result = await self.session.execute(
+            select(UserWord).where(
+                UserWord.profile_id == profile_id
+            ).options(
+                selectinload(UserWord.word),
+                selectinload(UserWord.statistics),
+                selectinload(UserWord.profile).selectinload(LanguageProfile.user)
+            ).limit(limit)
+        )
+        return list(result.scalars().all())
 
     async def get_user_vocabulary(
         self,

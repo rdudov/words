@@ -21,6 +21,15 @@ This directory contains the service layer implementation for the Words applicati
   - Cache-first strategy to minimize API costs
   - Graceful error handling and fallback
   - Coordinates LLMClient and CacheRepository
+- **validation.py**: ValidationService (Task 4.2)
+  - Three-level validation: exact, fuzzy, LLM
+  - Uses FuzzyMatcher utilities for typo detection
+  - Coordinates TranslationService for LLM validation
+- **lesson.py**: LessonService (Tasks 4.5/4.6)
+  - Lesson creation and completion summaries
+  - Question generation with multiple choice options
+  - Answer processing with statistics updates
+  - Coordinates lesson, statistics, and word repositories
 
 ## Usage Pattern
 
@@ -64,6 +73,8 @@ is_correct, comment = await translation_service.validate_answer_with_llm(
 - **Comprehensive Logging**: All operations are logged for monitoring and debugging
 - **Error Handling**: Services handle errors gracefully with appropriate fallbacks
 - **Cache Optimization**: TranslationService implements cache-first strategy
+- **Validation Pipeline**: ValidationService provides exact/fuzzy/LLM checks
+- **Lesson Orchestration**: LessonService coordinates lesson flow and stats
 - **Test Coverage**: Comprehensive unit and integration tests for all services
 
 ## Testing

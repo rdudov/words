@@ -46,11 +46,11 @@ python -m src.words
 
 ## Logging Standards
 
-The project uses Python's standard `logging` module with rotating file handlers. This provides consistent, production-ready logging without external dependencies.
+The project uses Python's standard `logging` module with rotating file handlers. For structured key-value context, use the lightweight `EventLogger` wrapper from `src/words/utils/logger.py`.
 
 **Core Principles:**
 - Use standard `logging` module (NOT structlog or other libraries)
-- Each module creates its own logger: `logger = logging.getLogger(__name__)`
+- Use `logging.getLogger(__name__)` for plain logs and `get_event_logger(__name__)` for structured event logs
 - Centralized configuration in `src/words/utils/logger.py`
 - Log rotation via `RotatingFileHandler`
 - Dual output: console + rotating log files
@@ -70,8 +70,10 @@ In every module that needs logging, add at the top level:
 
 ```python
 import logging
+from src.words.utils.logger import get_event_logger
 
 logger = logging.getLogger(__name__)
+event_logger = get_event_logger(__name__)
 
 # Then use throughout the module:
 logger.info("User registered successfully")
@@ -79,6 +81,10 @@ logger.error("Failed to connect to database")
 logger.exception("Unexpected error occurred")  # Includes stack trace
 logger.warning("API rate limit approaching")
 logger.debug("Processing item %d", item_id)
+
+# Structured event logs (key-value context)
+event_logger.info("user_registered", user_id=123, language="en")
+event_logger.error("llm_api_error", error=str(e), model="gpt-4o-mini")
 ```
 
 **CORRECT Examples:**
@@ -97,6 +103,12 @@ try:
     risky_operation()
 except Exception as e:
     logger.exception("Operation failed")  # Use exception(), not error()
+
+# Structured exception logging
+try:
+    risky_operation()
+except Exception:
+    event_logger.exception("operation_failed", user_id=123)
 ```
 
 **INCORRECT Examples (DO NOT USE):**
@@ -104,8 +116,8 @@ except Exception as e:
 # ❌ Wrong: Importing logger from utils
 from src.words.utils.logger import logger  # NO!
 
-# ❌ Wrong: Structured logging syntax
-logger.info("user_registered", user_id=123, language="en")  # NO!
+# ❌ Wrong: Structured logging syntax on a standard logger
+logger.info("user_registered", user_id=123, language="en")  # NO! Use event_logger
 
 # ❌ Wrong: Using print statements
 print(f"Error: {error}")  # NO! Use logger.error()

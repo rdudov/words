@@ -32,6 +32,12 @@ This directory contains the repository pattern implementation for data access in
   - User vocabulary management: `get_user_word()`, `get_user_vocabulary()`, `count_by_status()`
   - Eager loading of relationships using selectinload
   - Case-insensitive word lookups
+- **lesson.py**: LessonRepository and LessonAttemptRepository (Task 4.3)
+  - Lesson management: `get_active_lesson()`, `get_recent_lessons()`
+  - Lesson attempts: `get_lesson_attempts()`
+- **statistics.py**: StatisticsRepository (Task 4.4)
+  - Word statistics: `get_or_create_stat()`, `update_stat()`
+  - Tracks streaks and totals per direction/test type
 
 ## Usage Pattern
 
@@ -66,6 +72,24 @@ async def example(session: AsyncSession):
         status=WordStatusEnum.LEARNING
     )
     stats = await user_word_repo.count_by_status(profile_id=1)
+```
+
+Lesson statistics example:
+```python
+from src.words.repositories import LessonRepository, LessonAttemptRepository, StatisticsRepository
+
+lesson_repo = LessonRepository(session)
+attempt_repo = LessonAttemptRepository(session)
+stats_repo = StatisticsRepository(session)
+
+active = await lesson_repo.get_active_lesson(profile_id=1)
+attempts = await attempt_repo.get_lesson_attempts(lesson_id=10)
+stat = await stats_repo.update_stat(
+    user_word_id=1,
+    direction="native_to_foreign",
+    test_type="multiple_choice",
+    is_correct=True
+)
 ```
 
 ## Key Features

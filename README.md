@@ -4,8 +4,8 @@ A Telegram bot for language learning with adaptive spaced repetition, LLM-powere
 
 ## Project Status
 
-**Current Phase:** Phase 3 In Progress - Word Management
-**Version:** 0.3.0-dev
+**Current Phase:** Phase 5 In Progress - Adaptive Algorithm
+**Version:** 0.4.0-dev
 
 ### Completed Tasks
 
@@ -42,9 +42,17 @@ A Telegram bot for language learning with adaptive spaced repetition, LLM-powere
 - ✅ Task 3.5: Word Service
 - ✅ Task 3.6: Add Word Handler
 
-### Phase 3 In Progress
+**Phase 4 - Lesson System:**
+- ✅ Task 4.1: String Utilities (Fuzzy Matching)
+- ✅ Task 4.2: Validation Service
+- ✅ Task 4.3: Lesson Repositories
+- ✅ Task 4.4: Statistics Repository
+- ✅ Task 4.5: Lesson Service (Core)
+- ✅ Task 4.6: Lesson Service Implementation
 
-Working on Word Management implementation with LLM integration.
+### Phase 5 In Progress
+
+Working on the adaptive algorithm and word selection logic.
 
 ## Project Structure
 
@@ -131,27 +139,31 @@ The script is idempotent and can be run multiple times without issues. It will:
 
 ### Using the Logger
 
-The application includes structured logging with support for both development and production modes:
+The application uses Python's standard logging with rotating file handlers.
+Use the standard logger for plain messages, or the event logger wrapper for
+structured key-value context.
 
 ```python
-from src.words.utils import logger
+import logging
+from src.words.utils.logger import get_event_logger
 
-# Basic logging
-logger.info("User action", user_id=123)
-logger.error("Something went wrong", error_code=500)
+logger = logging.getLogger(__name__)
+event_logger = get_event_logger(__name__)
 
-# Exception logging with stack traces
+logger.info("Bot started")
+event_logger.info("user_registered", user_id=123)
+
 try:
     risky_operation()
 except Exception:
-    logger.exception("Operation failed")
+    event_logger.exception("operation_failed", user_id=123)
 ```
 
 Logging configuration:
-- **Production mode** (`debug=False`): JSON format for easy parsing
-- **Development mode** (`debug=True`): Human-readable console format
-- Logs written to both file (configured via `log_file`) and console
-- Log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
+- Logs written to both file (configured via `LOG_FILE`) and console
+- Log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL (configured via `LOG_LEVEL`)
+- Log rotation via `MAX_LOG_SIZE` and `MAX_LOG_BACKUP_COUNT`
+- Single human-readable format for both console and file output
 
 ## Documentation
 

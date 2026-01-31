@@ -10,6 +10,8 @@ from .base import BaseRepository
 from .user import UserRepository, ProfileRepository
 from .cache import CacheRepository
 from .word import WordRepository, UserWordRepository
+from .lesson import LessonRepository, LessonAttemptRepository
+from .statistics import StatisticsRepository
 
 __all__ = [
     "BaseRepository",
@@ -18,4 +20,7 @@ __all__ = [
     "CacheRepository",
     "WordRepository",
     "UserWordRepository",
+    "LessonRepository",
+    "LessonAttemptRepository",
+    "StatisticsRepository",
 ]

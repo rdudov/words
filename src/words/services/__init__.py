@@ -9,10 +9,20 @@ Available Services:
 - UserService: User management and language profile operations
 - TranslationService: LLM-based word translation and answer validation with caching
 - WordService: Word management, vocabulary operations, and statistics
+- ValidationService: Answer validation (exact, fuzzy, LLM)
+- LessonService: Lesson orchestration and question flow
 """
 
 from .user import UserService
 from .translation import TranslationService
 from .word import WordService
+from .validation import ValidationService
+from .lesson import LessonService
 
-__all__ = ["UserService", "TranslationService", "WordService"]
+__all__ = [
+    "UserService",
+    "TranslationService",
+    "WordService",
+    "ValidationService",
+    "LessonService",
+]
