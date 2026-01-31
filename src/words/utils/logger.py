@@ -18,20 +18,44 @@ class EventLogger:
     def __init__(self, logger: logging.Logger) -> None:
         self._logger = logger
 
-    def debug(self, event: str, **kwargs) -> None:
-        self._logger.debug(event, extra=kwargs)
+    def _log(self, method, event: str, *args, **kwargs) -> None:
+        standard_keys = {"exc_info", "stack_info", "stacklevel", "extra"}
+        standard_kwargs: dict = {}
+        extra: dict = {}
 
-    def info(self, event: str, **kwargs) -> None:
-        self._logger.info(event, extra=kwargs)
+        for key, value in kwargs.items():
+            if key in standard_keys:
+                standard_kwargs[key] = value
+            else:
+                extra[key] = value
 
-    def warning(self, event: str, **kwargs) -> None:
-        self._logger.warning(event, extra=kwargs)
+        if "extra" in standard_kwargs:
+            if extra:
+                merged = dict(standard_kwargs["extra"])
+                merged.update(extra)
+                standard_kwargs["extra"] = merged
+        elif extra:
+            standard_kwargs["extra"] = extra
 
-    def error(self, event: str, **kwargs) -> None:
-        self._logger.error(event, extra=kwargs)
+        if standard_kwargs:
+            method(event, *args, **standard_kwargs)
+        else:
+            method(event, *args)
 
-    def exception(self, event: str, **kwargs) -> None:
-        self._logger.exception(event, extra=kwargs)
+    def debug(self, event: str, *args, **kwargs) -> None:
+        self._log(self._logger.debug, event, *args, **kwargs)
+
+    def info(self, event: str, *args, **kwargs) -> None:
+        self._log(self._logger.info, event, *args, **kwargs)
+
+    def warning(self, event: str, *args, **kwargs) -> None:
+        self._log(self._logger.warning, event, *args, **kwargs)
+
+    def error(self, event: str, *args, **kwargs) -> None:
+        self._log(self._logger.error, event, *args, **kwargs)
+
+    def exception(self, event: str, *args, **kwargs) -> None:
+        self._log(self._logger.exception, event, *args, **kwargs)
 
 
 def get_event_logger(name: str) -> EventLogger:
