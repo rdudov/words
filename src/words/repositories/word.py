@@ -171,7 +171,7 @@ class UserWordRepository(BaseRepository[UserWord]):
                 selectinload(UserWord.word),
                 selectinload(UserWord.statistics),
                 selectinload(UserWord.profile).selectinload(LanguageProfile.user)
-            )
+            ).execution_options(populate_existing=True)
         )
         return result.scalar_one_or_none()
 

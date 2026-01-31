@@ -18,7 +18,7 @@ class EventLogger:
     def __init__(self, logger: logging.Logger) -> None:
         self._logger = logger
 
-    def _log(self, method, event: str, *args, **kwargs) -> None:
+    def _log(self, logger_method, event: str, *args, **kwargs) -> None:
         standard_keys = {"exc_info", "stack_info", "stacklevel", "extra"}
         standard_kwargs: dict = {}
         extra: dict = {}
@@ -38,9 +38,9 @@ class EventLogger:
             standard_kwargs["extra"] = extra
 
         if standard_kwargs:
-            method(event, *args, **standard_kwargs)
+            logger_method(event, *args, **standard_kwargs)
         else:
-            method(event, *args)
+            logger_method(event, *args)
 
     def debug(self, event: str, *args, **kwargs) -> None:
         self._log(self._logger.debug, event, *args, **kwargs)
