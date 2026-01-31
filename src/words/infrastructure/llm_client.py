@@ -34,7 +34,8 @@ class TranslationResponse(BaseModel):
     examples: list[ExampleSentence]
     # word_forms allows None values because not all forms apply to all words
     # (e.g., nouns don't have comparative, adjectives don't have plural)
-    word_forms: dict[str, Optional[str]]
+    # Some providers return nested objects (e.g., verb_conjugations), so allow dict values.
+    word_forms: dict[str, Optional[str] | dict]
 
 
 class ValidationResponse(BaseModel):

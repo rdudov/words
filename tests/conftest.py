@@ -5,9 +5,16 @@ This file contains pytest fixtures that are available to all test modules.
 """
 
 import pytest
+import asyncio
+import contextlib
+import pytest_asyncio
+from dotenv import load_dotenv
 import sys
 import os
 from pathlib import Path
+
+# Load .env so E2E tests can use real API keys when present
+load_dotenv()
 
 # Set up test environment variables before any imports
 os.environ.setdefault("TELEGRAM_BOT_TOKEN", "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11")
@@ -20,6 +27,27 @@ os.environ.setdefault("DEBUG", "true")
 # Add src directory to Python path for imports
 src_path = Path(__file__).parent.parent / "src"
 sys.path.insert(0, str(src_path))
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def _event_loop_heartbeat():
+    """
+    Keep the event loop waking periodically so thread callbacks are processed.
+
+    In this environment, asyncio callbacks from thread pool work can stall
+    unless the loop wakes on a timer. A tiny heartbeat avoids hangs in async DB tests.
+    """
+    async def _heartbeat():
+        while True:
+            await asyncio.sleep(0.05)
+
+    task = asyncio.create_task(_heartbeat())
+    try:
+        yield
+    finally:
+        task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await task
 
 
 @pytest.fixture

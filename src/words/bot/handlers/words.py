@@ -32,6 +32,18 @@ logger = logging.getLogger(__name__)
 
 router = Router(name="words")
 
+_llm_client: LLMClient | None = None
+_llm_client_factory = None
+
+
+def _get_llm_client() -> LLMClient:
+    """Return a shared LLM client, recreating it if the class was patched."""
+    global _llm_client, _llm_client_factory
+    if _llm_client is None or _llm_client_factory is not LLMClient:
+        _llm_client = LLMClient(settings.llm_api_key, settings.llm_model)
+        _llm_client_factory = LLMClient
+    return _llm_client
+
 
 @router.message(F.text == "➕ Add Word")
 async def cmd_add_word(message: Message, state: FSMContext) -> None:
@@ -98,15 +110,12 @@ async def process_word_input(message: Message, state: FSMContext) -> None:
                 await state.clear()
                 return
 
-            # Setup services
-            llm_client = LLMClient(settings.llm_api_key, settings.llm_model)
+            # Setup services (reuse shared LLM client)
+            word_repo = WordRepository(session)
+            user_word_repo = UserWordRepository(session)
             cache_repo = CacheRepository(session)
-            translation_service = TranslationService(llm_client, cache_repo)
-            word_service = WordService(
-                WordRepository(session),
-                UserWordRepository(session),
-                translation_service
-            )
+            translation_service = TranslationService(_get_llm_client(), cache_repo)
+            word_service = WordService(word_repo, user_word_repo, translation_service)
 
             # Try to get translation (detect language)
             # First try: word is in target language
@@ -150,7 +159,8 @@ async def process_word_input(message: Message, state: FSMContext) -> None:
                 profile_id=profile.profile_id,
                 word_text=word_text,
                 source_language=source_lang,
-                target_language=target_lang
+                target_language=target_lang,
+                translation_data=translation_data
             )
 
             # Format response

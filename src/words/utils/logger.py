@@ -12,6 +12,33 @@ from logging.handlers import RotatingFileHandler
 from src.words.config.settings import settings
 
 
+class EventLogger:
+    """Lightweight logger wrapper that accepts structured kwargs."""
+
+    def __init__(self, logger: logging.Logger) -> None:
+        self._logger = logger
+
+    def debug(self, event: str, **kwargs) -> None:
+        self._logger.debug(event, extra=kwargs)
+
+    def info(self, event: str, **kwargs) -> None:
+        self._logger.info(event, extra=kwargs)
+
+    def warning(self, event: str, **kwargs) -> None:
+        self._logger.warning(event, extra=kwargs)
+
+    def error(self, event: str, **kwargs) -> None:
+        self._logger.error(event, extra=kwargs)
+
+
+def get_event_logger(name: str) -> EventLogger:
+    """Return an EventLogger wrapper for a named logger."""
+    return EventLogger(logging.getLogger(name))
+
+
+logger = get_event_logger(__name__)
+
+
 def setup_log_directories():
     """
     Create necessary directories for logs if they don't exist.

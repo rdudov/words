@@ -49,7 +49,7 @@ A Telegram-based language learning bot that uses adaptive algorithms and LLM-pow
 | **Background Tasks** | APScheduler | Simple, no external dependencies, sufficient for requirements |
 | **Caching** | In-memory + DB | Fast access, persistent across restarts |
 | **String Matching** | python-Levenshtein | Fast, accurate fuzzy matching |
-| **Logging** | Python logging + structlog | Structured logs, easy parsing, rotation |
+| **Logging** | Python logging + EventLogger wrapper | Structured context via standard logging, rotation |
 
 ### 1.3 Non-Functional Requirements Summary
 
@@ -2430,71 +2430,37 @@ localizer = Localizer()
 
 ### 10.1 Logging Architecture
 
-**Structured Logging with structlog:**
+**Standard logging with EventLogger wrapper:**
 
 ```python
-# src/words/utils/logger.py
+# src/words/utils/logger.py (conceptual)
 import logging
-import structlog
-from pathlib import Path
+from logging.handlers import RotatingFileHandler
 
-def setup_logging(log_level: str, log_file: str):
-    """Configure structured logging"""
+def setup_logging():
+    # RotatingFileHandler + StreamHandler with a single format
+    ...
 
-    # Create logs directory
-    Path(log_file).parent.mkdir(parents=True, exist_ok=True)
-
-    # Configure structlog
-    structlog.configure(
-        processors=[
-            structlog.stdlib.filter_by_level,
-            structlog.stdlib.add_logger_name,
-            structlog.stdlib.add_log_level,
-            structlog.processors.TimeStamper(fmt="iso"),
-            structlog.processors.StackInfoRenderer(),
-            structlog.processors.format_exc_info,
-            structlog.processors.UnicodeDecoder(),
-            structlog.processors.JSONRenderer()
-        ],
-        context_class=dict,
-        logger_factory=structlog.stdlib.LoggerFactory(),
-        cache_logger_on_first_use=True,
-    )
-
-    # Configure standard logging
-    logging.basicConfig(
-        format="%(message)s",
-        level=getattr(logging, log_level.upper()),
-        handlers=[
-            logging.FileHandler(log_file),
-            logging.StreamHandler()
-        ]
-    )
-
-def get_logger(name: str):
-    """Get logger instance"""
-    return structlog.get_logger(name)
+def get_event_logger(name: str):
+    # Wraps a standard logger to accept key-value context via extra
+    return EventLogger(logging.getLogger(name))
 ```
 
 **Usage:**
 
 ```python
-from words.utils.logger import get_logger
+import logging
+from src.words.utils.logger import get_event_logger
 
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
+event_logger = get_event_logger(__name__)
 
-logger.info(
+logger.info("Bot started")
+event_logger.info(
     "user_registered",
     user_id=user_id,
     native_language=native_lang,
     target_language=target_lang
-)
-
-logger.error(
-    "llm_api_error",
-    error=str(e),
-    word=word,
-    retry_count=retry
 )
 ```
 

@@ -9,7 +9,6 @@ Usage:
 """
 
 import asyncio
-import logging
 import sys
 from pathlib import Path
 from urllib.parse import urlparse, unquote
@@ -18,9 +17,8 @@ from urllib.parse import urlparse, unquote
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.words.infrastructure.database import init_db, engine
+from src.words.utils.logger import logger
 from src.words.config.settings import settings
-
-logger = logging.getLogger(__name__)
 
 
 def create_database_directory():
