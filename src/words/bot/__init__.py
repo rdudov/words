@@ -39,10 +39,12 @@ async def setup_bot() -> tuple[Bot, Dispatcher]:
     dp = Dispatcher(storage=storage)
 
     # Register handlers
-    from src.words.bot.handlers import start_router, words_router
+    # Order matters: more specific handlers (with StateFilter) must be first
+    from src.words.bot.handlers import lesson_router, start_router, words_router
 
-    dp.include_router(start_router)
+    dp.include_router(lesson_router)  # First: has StateFilter conditions
     dp.include_router(words_router)
+    dp.include_router(start_router)
 
     logger.info("Bot initialized")
 

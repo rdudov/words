@@ -9,6 +9,9 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 import random
 
+from src.words.algorithm.difficulty import DifficultyAdjuster
+from src.words.algorithm.spaced_repetition import update_review_schedule
+from src.words.algorithm.word_selector import WordSelector
 from src.words.config.constants import Direction, TestType
 from src.words.config.settings import settings
 from src.words.models.lesson import Lesson, LessonAttempt
@@ -66,6 +69,10 @@ class LessonService:
         self.word_repo = word_repo
         self.stats_repo = stats_repo
         self.validation_service = validation_service
+        self.difficulty_adjuster = DifficultyAdjuster(
+            choice_to_input_threshold=settings.choice_to_input_threshold,
+            mastered_threshold=settings.mastered_threshold
+        )
 
     async def get_or_create_active_lesson(
         self,
@@ -96,6 +103,29 @@ class LessonService:
         )
 
         return lesson
+
+    async def get_words_for_lesson(
+        self,
+        profile_id: int,
+        count: int = 30
+    ) -> list[UserWord]:
+        """
+        Get words for lesson using adaptive selection.
+
+        Uses WordSelector algorithm.
+        """
+        candidates = await self.user_word_repo.get_user_vocabulary(
+            profile_id=profile_id,
+            status=None
+        )
+
+        candidates = [
+            word for word in candidates
+            if word.status != WordStatusEnum.MASTERED
+        ]
+
+        selector = WordSelector(words_per_lesson=count)
+        return await selector.select_words_for_lesson(candidates)
 
     async def generate_next_question(
         self,
@@ -159,6 +189,15 @@ class LessonService:
                 level=level,
                 count=4
             )
+            
+            # Fallback to INPUT if insufficient options
+            if options is None:
+                test_type = TestType.INPUT.value
+                logger.info(
+                    "falling_back_to_input_test",
+                    word_id=word.word_id,
+                    reason="insufficient_distractors"
+                )
 
         return Question(
             user_word_id=user_word.user_word_id,
@@ -183,13 +222,7 @@ class LessonService:
 
     def _determine_test_type(self, user_word: UserWord) -> str:
         """Determine test type based on word statistics."""
-        threshold = settings.choice_to_input_threshold
-        for stat in user_word.statistics:
-            if (stat.test_type == TestType.MULTIPLE_CHOICE.value and
-                    stat.correct_count >= threshold):
-                return TestType.INPUT.value
-
-        return TestType.MULTIPLE_CHOICE.value
+        return self.difficulty_adjuster.determine_test_type(user_word)
 
     async def _generate_options(
         self,
@@ -200,8 +233,13 @@ class LessonService:
         target_lang: str,
         level: str,
         count: int = 4
-    ) -> list[str]:
-        """Generate answer options for multiple choice."""
+    ) -> list[str] | None:
+        """
+        Generate answer options for multiple choice.
+        
+        Returns None if insufficient options found (< 2), 
+        indicating INPUT test should be used instead.
+        """
         options = [correct_answer]
         answer_language = (
             target_lang
@@ -227,6 +265,16 @@ class LessonService:
                 count=count,
                 exclude_word_id=word.word_id
             )
+
+        # Log warning if insufficient options
+        if len(options) < 2:
+            logger.warning(
+                "insufficient_options_for_multiple_choice",
+                word_id=word.word_id,
+                expected=count,
+                actual=len(options)
+            )
+            return None
 
         random.shuffle(options)
         return options[:count]
@@ -324,6 +372,11 @@ class LessonService:
         if user_word:
             user_word.last_reviewed_at = datetime.now(timezone.utc)
             await self._update_word_status(user_word)
+            await update_review_schedule(
+                user_word,
+                validation.is_correct,
+                validation.method
+            )
 
         await self.lesson_repo.commit()
 
@@ -344,24 +397,7 @@ class LessonService:
 
     async def _update_word_status(self, user_word: UserWord) -> None:
         """Update word status based on performance."""
-        mastered_threshold = settings.mastered_threshold
-
-        for stat in user_word.statistics:
-            if stat.correct_count >= mastered_threshold:
-                user_word.status = WordStatusEnum.MASTERED
-                logger.info(
-                    "word_mastered",
-                    user_word_id=user_word.user_word_id
-                )
-                return
-
-        if user_word.status == WordStatusEnum.NEW:
-            if any(s.total_attempts > 0 for s in user_word.statistics):
-                user_word.status = WordStatusEnum.LEARNING
-
-        elif user_word.status == WordStatusEnum.LEARNING:
-            if any(s.total_correct >= 5 for s in user_word.statistics):
-                user_word.status = WordStatusEnum.REVIEWING
+        self.difficulty_adjuster.update_word_status(user_word)
 
     async def complete_lesson(self, lesson_id: int) -> dict:
         """Complete lesson and return summary."""
