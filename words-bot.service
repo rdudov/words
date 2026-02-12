@@ -1,0 +1,19 @@
+[Unit]
+Description=Words Telegram Bot
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/projects/words
+Environment=PATH=/opt/projects/words/venv/bin
+EnvironmentFile=-/opt/projects/words/.env
+ExecStart=/opt/projects/words/venv/bin/python -m src.words
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=words-bot
+
+[Install]
+WantedBy=multi-user.target
