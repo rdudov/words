@@ -19,7 +19,8 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sess
 
 from src.words.services.user import UserService
 from src.words.repositories.user import UserRepository, ProfileRepository
-from src.words.models import Base, User, LanguageProfile, CEFRLevel
+from src.words.repositories.word import WordRepository, UserWordRepository
+from src.words.models import Base, User, LanguageProfile, CEFRLevel, Word
 
 
 class TestUserServiceInitialization:
@@ -566,6 +567,37 @@ class TestUserServiceIntegration:
             assert profile.target_language == "en"
             assert profile.level == CEFRLevel.B1
             assert profile.is_active is True
+
+    @pytest.mark.asyncio
+    async def test_create_language_profile_populates_initial_vocabulary(self, session):
+        """Test profile bootstrap from frequency list words."""
+        user_repo = UserRepository(session)
+        profile_repo = ProfileRepository(session)
+        word_repo = WordRepository(session)
+        user_word_repo = UserWordRepository(session)
+        service = UserService(
+            user_repo,
+            profile_repo,
+            word_repo,
+            user_word_repo,
+            initial_words_count=3,
+        )
+
+        session.add_all(
+            [
+                Word(word="one", language="en", level="A1", frequency_rank=1),
+                Word(word="two", language="en", level="A1", frequency_rank=2),
+                Word(word="three", language="en", level="A1", frequency_rank=3),
+            ]
+        )
+        await session.commit()
+
+        with patch('src.words.services.user.logger'):
+            await service.register_user(123456789, "ru", "ru")
+            profile = await service.create_language_profile(123456789, "en", "A1")
+
+        user_words = await user_word_repo.get_user_vocabulary(profile.profile_id)
+        assert len(user_words) == 3
 
     @pytest.mark.asyncio
     async def test_integration_create_multiple_profiles_only_one_active(self, service):

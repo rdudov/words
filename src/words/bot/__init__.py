@@ -11,6 +11,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 
 from src.words.config.settings import settings
+from src.words.bot.middleware import ActivityTrackingMiddleware
 from .states import (
     AddWordStates,
     LessonStates,
@@ -37,12 +38,23 @@ async def setup_bot() -> tuple[Bot, Dispatcher]:
 
     storage = MemoryStorage()
     dp = Dispatcher(storage=storage)
+    activity_middleware = ActivityTrackingMiddleware()
+    dp.message.middleware(activity_middleware)
+    dp.callback_query.middleware(activity_middleware)
 
     # Register handlers
     # Order matters: more specific handlers (with StateFilter) must be first
-    from src.words.bot.handlers import lesson_router, start_router, words_router
+    from src.words.bot.handlers import (
+        lesson_router,
+        settings_router,
+        start_router,
+        stats_router,
+        words_router,
+    )
 
     dp.include_router(lesson_router)  # First: has StateFilter conditions
+    dp.include_router(settings_router)
+    dp.include_router(stats_router)
     dp.include_router(words_router)
     dp.include_router(start_router)
 

@@ -7,7 +7,9 @@ This module provides service classes for:
 
 from datetime import datetime, timezone
 from src.words.repositories.user import UserRepository, ProfileRepository
+from src.words.repositories.word import WordRepository, UserWordRepository
 from src.words.models.user import User, LanguageProfile, CEFRLevel
+from src.words.models.word import UserWord
 from src.words.utils.logger import get_event_logger
 
 logger = get_event_logger(__name__)
@@ -41,7 +43,10 @@ class UserService:
     def __init__(
         self,
         user_repo: UserRepository,
-        profile_repo: ProfileRepository
+        profile_repo: ProfileRepository,
+        word_repo: WordRepository | None = None,
+        user_word_repo: UserWordRepository | None = None,
+        initial_words_count: int = 50,
     ):
         """Initialize service with repositories.
 
@@ -51,6 +56,9 @@ class UserService:
         """
         self.user_repo = user_repo
         self.profile_repo = profile_repo
+        self.word_repo = word_repo
+        self.user_word_repo = user_word_repo
+        self.initial_words_count = initial_words_count
 
     async def register_user(
         self,
@@ -138,6 +146,7 @@ class UserService:
 
         profile = await self.profile_repo.add(profile)
         await self.profile_repo.commit()
+        await self._populate_initial_vocabulary(profile)
 
         logger.info(
             "profile_created",
@@ -147,6 +156,41 @@ class UserService:
         )
 
         return profile
+
+    async def _populate_initial_vocabulary(self, profile: LanguageProfile) -> None:
+        """Populate profile vocabulary with CEFR frequency words."""
+        if not self.word_repo or not self.user_word_repo:
+            return
+
+        frequency_words = await self.word_repo.get_frequency_words(
+            language=profile.target_language,
+            level=profile.level.value,
+            limit=self.initial_words_count,
+        )
+        if not frequency_words:
+            return
+
+        existing_words = await self.user_word_repo.get_user_vocabulary(
+            profile_id=profile.profile_id,
+            status=None,
+        )
+        existing_word_ids = {item.word_id for item in existing_words}
+
+        created = 0
+        for word in frequency_words:
+            if word.word_id in existing_word_ids:
+                continue
+
+            user_word = UserWord(
+                profile_id=profile.profile_id,
+                word_id=word.word_id,
+            )
+            await self.user_word_repo.add(user_word)
+            existing_word_ids.add(word.word_id)
+            created += 1
+
+        if created:
+            await self.user_word_repo.commit()
 
     async def get_user(self, user_id: int) -> User | None:
         """Get existing user or return None if not registered.

@@ -113,7 +113,9 @@ async def cmd_start_lesson(message: Message, state: FSMContext) -> None:
 
             selected_words = await lesson_service.get_words_for_lesson(
                 profile_id=profile.profile_id,
-                count=settings.words_per_lesson
+                count=settings.words_per_lesson,
+                target_language=profile.target_language,
+                level=profile.level.value,
             )
 
             if not selected_words:

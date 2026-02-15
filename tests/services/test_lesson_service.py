@@ -284,6 +284,49 @@ async def test_get_words_for_lesson_prioritizes_overdue_and_excludes_mastered(
 
 
 @pytest.mark.asyncio
+async def test_get_words_for_lesson_backfills_from_frequency_words(
+    integration_test_session
+):
+    session = integration_test_session
+    user = User(user_id=41001, native_language="ru", interface_language="ru")
+    profile = LanguageProfile(user_id=41001, target_language="en", level=CEFRLevel.B1)
+    session.add_all([user, profile])
+    await session.commit()
+
+    words = [
+        Word(word="alpha", language="en", level="B1", frequency_rank=1, translations={"ru": ["альфа"]}),
+        Word(word="beta", language="en", level="B1", frequency_rank=2, translations={"ru": ["бета"]}),
+        Word(word="gamma", language="en", level="B1", frequency_rank=3, translations={"ru": ["гамма"]}),
+    ]
+    session.add_all(words)
+    await session.commit()
+
+    # User initially has only one word in personal vocabulary.
+    session.add(UserWord(profile_id=profile.profile_id, word_id=words[0].word_id))
+    await session.commit()
+
+    lesson_service = LessonService(
+        lesson_repo=LessonRepository(session),
+        attempt_repo=LessonAttemptRepository(session),
+        user_word_repo=UserWordRepository(session),
+        word_repo=WordRepository(session),
+        stats_repo=StatisticsRepository(session),
+        validation_service=ValidationService(AsyncMock()),
+    )
+
+    selected = await lesson_service.get_words_for_lesson(
+        profile_id=profile.profile_id,
+        count=3,
+        target_language="en",
+        level="B1",
+    )
+    assert len(selected) == 3
+
+    all_user_words = await lesson_service.user_word_repo.get_user_vocabulary(profile.profile_id)
+    assert len(all_user_words) == 3
+
+
+@pytest.mark.asyncio
 async def test_process_answer_updates_spaced_repetition_and_status(
     integration_test_session, monkeypatch
 ):

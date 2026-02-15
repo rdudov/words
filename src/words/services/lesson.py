@@ -107,7 +107,9 @@ class LessonService:
     async def get_words_for_lesson(
         self,
         profile_id: int,
-        count: int = 30
+        count: int = 30,
+        target_language: str | None = None,
+        level: str | None = None,
     ) -> list[UserWord]:
         """
         Get words for lesson using adaptive selection.
@@ -124,8 +126,63 @@ class LessonService:
             if word.status != WordStatusEnum.MASTERED
         ]
 
+        if len(candidates) < count and target_language and level:
+            await self._backfill_from_frequency_list(
+                profile_id=profile_id,
+                existing_candidates=candidates,
+                target_language=target_language,
+                level=level,
+                needed=count - len(candidates),
+            )
+            candidates = await self.user_word_repo.get_user_vocabulary(
+                profile_id=profile_id,
+                status=None,
+            )
+            candidates = [
+                word for word in candidates
+                if word.status != WordStatusEnum.MASTERED
+            ]
+
         selector = WordSelector(words_per_lesson=count)
         return await selector.select_words_for_lesson(candidates)
+
+    async def _backfill_from_frequency_list(
+        self,
+        profile_id: int,
+        existing_candidates: list[UserWord],
+        target_language: str,
+        level: str,
+        needed: int,
+    ) -> None:
+        """Add missing lesson words from CEFR frequency list to user vocabulary."""
+        if needed <= 0:
+            return
+
+        existing_word_ids = {item.word_id for item in existing_candidates}
+        frequency_words = await self.word_repo.get_frequency_words(
+            language=target_language,
+            level=level.upper(),
+            limit=max(needed * 5, settings.words_per_lesson * 3),
+        )
+
+        created = 0
+        for word in frequency_words:
+            if word.word_id in existing_word_ids:
+                continue
+
+            user_word = UserWord(
+                profile_id=profile_id,
+                word_id=word.word_id,
+            )
+            await self.user_word_repo.add(user_word)
+            existing_word_ids.add(word.word_id)
+            created += 1
+
+            if created >= needed:
+                break
+
+        if created:
+            await self.user_word_repo.commit()
 
     async def generate_next_question(
         self,

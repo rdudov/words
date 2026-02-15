@@ -11,6 +11,7 @@ Available Services:
 - WordService: Word management, vocabulary operations, and statistics
 - ValidationService: Answer validation (exact, fuzzy, LLM)
 - LessonService: Lesson orchestration and question flow
+- NotificationService: Inactive user reminders and push scheduling logic
 """
 
 from .user import UserService
@@ -18,6 +19,7 @@ from .translation import TranslationService
 from .word import WordService
 from .validation import ValidationService
 from .lesson import LessonService
+from .notification import NotificationService
 
 __all__ = [
     "UserService",
@@ -25,4 +27,5 @@ __all__ = [
     "WordService",
     "ValidationService",
     "LessonService",
+    "NotificationService",
 ]

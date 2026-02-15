@@ -16,6 +16,7 @@ from src.words.infrastructure.llm_client import (
     LLMClient,
     RateLimitedLLMClient,
 )
+from src.words.infrastructure.scheduler import NotificationScheduler
 
 __all__ = [
     "engine",
@@ -25,4 +26,5 @@ __all__ = [
     "close_db",
     "LLMClient",
     "RateLimitedLLMClient",
+    "NotificationScheduler",
 ]

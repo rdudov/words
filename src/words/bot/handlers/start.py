@@ -27,6 +27,7 @@ from src.words.bot.keyboards.common import (
 from src.words.services.user import UserService
 from src.words.infrastructure.database import get_session
 from src.words.repositories.user import UserRepository, ProfileRepository
+from src.words.repositories.word import WordRepository, UserWordRepository
 from src.words.config.constants import SUPPORTED_LANGUAGES, CEFR_LEVELS
 
 router = Router(name="start")
@@ -51,7 +52,9 @@ async def cmd_start(message: Message, state: FSMContext):
     async with get_session() as session:
         user_service = UserService(
             UserRepository(session),
-            ProfileRepository(session)
+            ProfileRepository(session),
+            WordRepository(session),
+            UserWordRepository(session),
         )
 
         user = await user_service.get_user(user_id)
