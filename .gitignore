@@ -137,3 +137,15 @@ logs/**/*.log
 *.sqlite3
 data/cache/
 .DS_Store
+
+# Keys (not part of this project)
+client_private_key
+client_psk
+client_public_key
+
+# Local docs (implementation plans, reviews, summaries)
+docs/implementation_plan.md
+docs/code_review*.md
+docs/fixes_summary.md
+docs/new_features_summary.md
+data/frequency_reference/
